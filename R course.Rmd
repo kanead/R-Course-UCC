@@ -1,0 +1,42 @@
+---
+title: "Statistics and Data Management in R"
+author: "Adam Kane & James Savage"
+date: "24 October 2016"
+output: html_document
+---
+\section{Installation}
+R is a computer language used to conduct statistics and data analysis
+it can be downloaded here https://cran.r-project.org/ A nice interface for it can be downloaded here https://www.rstudio.com/
+
+You can work directly within the console by typing code but it is better to write code
+in a separate file called a script which can be saved, edited and run at a later date. 
+
+R can be used for doing maths and it comes with a number of functions such as 'log10' preloaded 
+
+```{r}
+1+1
+2*2 
+16/4
+5^2
+log10(100)
+```
+
+To execute a line of code from your script you can highlight the whole line or simply 
+click on the line and press 'ctrl R'
+
+You can plot data as a scatterplot 
+```{r}
+x<- rnorm(n = 100, mean = 0, sd = 1)
+y<- rnorm(n = 100, mean = 3, sd = 2)
+plot(x,y)
+```
+
+or as histograms 
+
+
+
+```{r}
+hist(x)
+hist(y)
+```
+
