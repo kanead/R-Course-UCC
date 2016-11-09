@@ -1,0 +1,293 @@
+---
+title: "Statistics Teaching"
+author: "Adam Kane"
+date: "4 November 2016"
+output: html_document
+---
+# Variables
+A variable is something that can take on different values e.g. height is a variable. The opposite of variables are constants e.g. the gravitational constant which has one value only. 
+
+
+## Types of variables (NOIR)
+In statistics we can consider 4 variable types:
+
+###Nominal variables 
+are variables that have two or more categories, but which do not have an intrinsic order. For example, classifying where people live in the USA by state. In this case there will be 50 'levels' of the nominal variable.
+
+```{r}
+nominalVariables <- c("Alaska", "Florida", "New York", "Washington", "Texas") 
+```
+
+###Ordinal variables 
+are variables that have two or more categories just like nominal variables only the categories can also be ordered or ranked. So if you asked someone if they liked the policies of the Democratic Party and they could answer either "Not very much", "They are OK" or "Yes, a lot" then you have an ordinal variable. Why? Because you have 3 categories, namely "Not very much", "They are OK" and "Yes, a lot" and you can rank them from the most positive (Yes, a lot), to the middle response (They are OK), to the least positive (Not very much). However, whilst we can rank the levels, we cannot place a "value" to them; we cannot say that "They are OK" is twice as positive as "Not very much" for example.
+
+###Interval variables 
+are variables for which their central characteristic is that they can be measured along a continuum and they have a numerical value (for example, temperature measured in degrees Celsius or Fahrenheit). So the difference between 20C and 30C is the same as 30C to 40C. However, temperature measured in degrees Celsius or Fahrenheit is NOT a ratio variable. In interval scales, addition and subtraction make sense, but multiplication and division do not. That is, 70C is not "twice as hot"" as 35C. If this is confusing, think what a negative temperature would mean, or a 0 temperature! 30C is -1 times as hot as -30C? It doesn't make sense!
+
+###Ratio variables 
+are interval variables, but with the added condition that 0 (zero) of the measurement indicates that there is none of that variable. So, temperature measured in degrees Celsius or Fahrenheit is not a ratio variable because 0C does not mean there is no temperature. However, temperature measured in Kelvin is a ratio variable as 0 Kelvin (often called absolute zero) indicates that there is no temperature whatsoever. Other examples of ratio variables include height, mass, distance and many more. Ratio responses mean that not only is there order and spacing, but that multiplication makes sense as well. Two common examples are height and weight. A person who weighs 200 pounds weighs double what a person who weighs 100 pounds weighs. 
+
+### Problematic Percentages
+So, are percentages nominal, ordinal, interval or ratio? Technically, they are not even ratio - you cannot double a percentage without distorting the meaning
+
+### Levels of measurement
+In general it is advantageous to treat variables as the highest level of measurement for which they qualify.  That is, we could treat education level as a categorical variable, but usually we will want to treat it as an ordinal variable.  This is because treating it as an ordinal variable retains more of the information carried in the data.  If we were to reduce it to a categorical variable, we would lose the order of the levels of the variable.  By using a higher level of measurement, we will have more options in the way we analyze, summarize, and present data.
+
+# Parametric Vs Non Parametric Tests 
+There is a lot of confusion about parametric vs. non-parametric statistics and tests.  Some of the literature that explains the difference gets pretty technical.  Here is a layman's description that might not be 100% technically accurate but that will let you understand the difference.A parameter is a characteristic of a population.  We often estimate parameters with statistics that come from samples.  Some common parameters and statistics are the mean, the median, the standard deviation and so on.
+
+Some tests use these parameters.  For example, every variety of the t-test uses means and standard deviations.  Therefore, the t-test is called a parametric test. On the other hand, some tests do not use these parameters.  For example, the Mann Whitney U test uses no parameters.  Therefore, it is called a non-parametric test.
+
+If you want to tell if a test is parametric or not, look at the formulas used in calculating it.  Do they contain parameters/statistics?
+
+If your measurement scale is nominal or ordinal then you use non-parametric statistics
+
+If you are using interval or ratio scales you use parametric statistics.
+
+# Histograms
+are used to plot the distribution of the data
+
+here is some normally distributed data
+
+```{r, echo=FALSE}
+x<-rnorm(1000, mean = 0, sd = 1)
+hist(x)
+```
+
+here the data are skewed to the right = positive skew
+```{r, echo=FALSE}
+x<-rbeta(1000,2,5)
+hist(x)
+```
+
+here the data are skewed to the left = negative skew
+```{r, echo=FALSE}
+x<-rbeta(1000,5,2)
+hist(x)
+```
+
+
+# Standardised Scales
+### Z-scores
+In statistics there is a standard scale the Z scale.
+Any score from any scale can be converted to Z scores 
+
+$Z = \frac{(X-M)}{SD}$
+
+X = raw score, the score on the original scale
+
+M = mean
+
+SD = standard deviation
+
+The mean Z-score is Z = 0
+
+Positive Z scores are above average
+
+Negative Z scores are below average
+
+For example  
+```{r}
+X = 99.6 # body temp for one person
+M = 98.6 # the mean for the group
+SD = 0.5 # the standard deviation for the group
+Z=(X-M)/SD; Z
+```
+This value of 2 means their score is 2 standard deviations above the mean
+
+### Percentile rank
+The percentage of scores that fall at or below a score in a distribution 
+Assume a normal distribution
+If Z = 0 then the percentile rank = 50th 
+50% of the distribution falls below the mean 
+
+#Summary Statistics
+##Central Tendency
+###The mean 
+is a measure of central tendency
+this describes the middle or centre point of a distribution
+$mean = M = \frac{1}{n} \sum_n^{i =1} x$
+
+###The median
+is the middle score (the score below which 50% of the distribution falls)
+preferred when there are extreme scores in the distribution
+
+###The mode
+is the score that occurs most often in the distribution, useful for nominal variables
+
+###How distribution can affect measures of central tendency
+Differing distribution may mean these three measures do not overlap
+Here the mean is blue, the median grey and the mode red.
+
+```{r, echo=FALSE}
+
+x <- seq(-2.5, 10, length=1000000)
+hx5 <- rnorm(x,0,1) + rexp(x,1/5) # tau=5 (rate = 1/tau)
+#
+# Compute the density.
+#
+dens <- density(hx5)
+#
+# Compute some measures of location.
+#
+n <- length(dens$y)                       #$
+dx <- mean(diff(dens$x))                  # Typical spacing in x $
+y.unit <- sum(dens$y) * dx                # Check: this should integrate to 1 $
+dx <- dx / y.unit                         # Make a minor adjustment
+x.mean <- sum(dens$y * dens$x) * dx
+y.mean <- dens$y[length(dens$x[dens$x < x.mean])] #$
+x.mode <- dens$x[i.mode <- which.max(dens$y)]
+y.mode <- dens$y[i.mode]                  #$
+y.cs <- cumsum(dens$y)                    #$
+x.med <- dens$x[i.med <- length(y.cs[2*y.cs <= y.cs[n]])] #$
+y.med <- dens$y[i.med]                                    #$
+#
+# Plot the density and the statistics.
+#
+plot(dens, xlim=c(-2.5,10), type="l", col="black", 
+     xlab="x",ylab = "y", main="different central tendencies", lwd=2)
+temp <- mapply(function(x,y,c) lines(c(x,x), c(0,y), lwd=2, col=c), 
+               c(x.mean, x.med, x.mode), 
+               c(y.mean, y.med, y.mode), 
+               c("Blue", "Gray", "Red"))
+```
+
+##Measures of Variability
+a measure that describes the range and diversity of scores in a distribution
+
+###standard deviation (SD) 
+the average deviation from the mean in a distribution
+
+$SD = \sqrt\frac{[\Sigma(X-M^2)]}{N}$ is used for descriptive statistics
+
+$SD = \sqrt\frac{[\Sigma(X-M^2)]}{N-1}$ is used for inferential statistics
+
+###variance ($SD^2$)
+
+sum of squared deviation scores = sum of squares are divided by the sample size
+
+$SD^2 = \frac{[\Sigma(X-M^2)]}{N}$ is used for descriptive statistics
+
+$SD^2 = \frac{[\Sigma(X-M^2)]}{N-1}$ is used for inferential statistics
+
+this is also known as the mean squares 
+
+###Example of Linsanity
+Jeremy Lin was a basketball player who went on a scoring streak for the New York Knicks. We can calculate some summary statistics for his games.  
+
+here are the points he scored for the games he played:
+
+```{r}
+pointsPerGame<-c(28,26,10,27,20,38,23,28,25,2)
+```
+
+we take the sum of those values and the sample size i.e. number of games he played to get the mean
+
+```{r}
+sum(pointsPerGame)
+length(pointsPerGame) 
+```
+
+so the mean is 
+
+```{r}
+sum(pointsPerGame)/length(pointsPerGame)
+```
+
+then the deviation scores show how much he deviated from the mean for each game i.e. it is the difference between a raw score and the mean.
+
+```{r}
+pointsPerGame - mean(pointsPerGame)
+```
+
+we can't get the average for the deviation scores because they sum to zero 
+
+```{r}
+deviationScores<- pointsPerGame - mean(pointsPerGame)
+devsum <- sum(deviationScores)
+```
+```{r, echo=FALSE}
+devsum <- if(all.equal(0L, devsum)) 0L else devsum ;devsum
+```
+```{r}
+devsum/length(pointsPerGame)
+```
+
+instead we square the deviation scores and sum them to give us a score for variance
+
+```{r}
+(pointsPerGame - mean(pointsPerGame))^2
+devSq <- (pointsPerGame - mean(pointsPerGame))^2
+devSumSq <- sum(devSq) ; devSumSq
+variance <- devSumSq/length(pointsPerGame) ; variance
+```
+
+Squaring however does have a problem as a measure of spread and that is that the units are all squared, where as we'd might prefer the spread to be in the same units as the original data (think of squared points scored). Hence the square root allows us to return to the original units.
+
+```{r}
+sqrt(variance)
+```
+
+#Correlation
+A statistical procedure used to measure and describe the relationship between two variables 
+
+Correlations can range between +1 and -1
+
++1 is perfect positive correlation
+
+0 is no correlation (independence)
+
+-1 is perfect negative correlation
+
+When two variables, let's call them X and Y, are correlated, then one variable can be used to predict the other variable.
+
+More precisely, a person's score on X can be used to predict his or her score on Y. 
+
+For example, working memory capacity is strongly correlated with intelligence, or IQ, in healthy young adults
+
+So if we know a person's IQ then we can predict how they will do on a a test of working memeory. 
+
+We can see in this scatterplot that there is a positive correlation in our data, which is verified by the value we get for our correlation.
+
+```{r}
+IQ <- rnorm(250, mean = 100, sd = 10)
+workingMemory <- IQ*rnorm(250, mean = 3, sd = 0.5)/100
+df = data.frame(IQ, workingMemory)
+plot(df$workingMemory~df$IQ, xlab="IQ" , ylab="working memory", pch = 16, main = "working memory and intelligence")
+cor.test(df$IQ, df$workingMemory)
+```
+
+
+##Warnings about correlation
+But we have to remember that correlation does not imply causation. In our example, working memory does not cause IQ and vice versa, rather there are lots of intervening variables. 
+
+The magnitude of a correlation is influenced by many factors, including: sampling (random and representative?), and the measurement of X & Y (are your measures of IQ reliable?). 
+
+When you fail to get a representative sample you can get attenutation of correlation due to a restriction of range in one of your variables. For instance, if you only select college graduates, you have preselected for higher IQ and this can reduce the correlation.
+
+This restriction of range essentially restricts variance ultimately impacting our ability to discern covariance. In the following scatterplot and correlation measure you can see this effect.
+
+```{r}
+dfAttenuated <- df[df$IQ >110, ]
+plot(dfAttenuated$workingMemory~dfAttenuated$IQ, xlab="IQ" , ylab="working memory", pch = 16, main = "working memory and intelligence")
+cor.test(dfAttenuated$IQ, dfAttenuated$workingMemory)
+```
+
+Finally, a correlation coefficient is a sample statistic just like the mean and won't be representative unless the correlation coefficient is 1. 
+
+##Types of Correlation
+There are several types of correlation coefficients, for different variable types. 
+
+###The Pearson product-moment correlation coefficient (r)
+
+This is used when both variables, X & Y, are continuous. 
+
+###The Point bi-serial correlation
+
+This is used when 1 variable is continuous and 1 is dichotomous. 
+
+###The Phi coefficient
+When both variables are dichotomous 
+
+###Spearman rank correlation
+When both variables are ordinal (ranked data)
