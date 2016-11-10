@@ -2,7 +2,9 @@
 title: "Statistics Teaching"
 author: "Adam Kane"
 date: "4 November 2016"
-output: html_document
+output:
+  html_document: default
+  pdf_document: default
 ---
 # Variables
 A variable is something that can take on different values e.g. height is a variable. The opposite of variables are constants e.g. the gravitational constant which has one value only. 
@@ -21,11 +23,23 @@ nominalVariables <- c("Alaska", "Florida", "New York", "Washington", "Texas")
 ###Ordinal variables 
 are variables that have two or more categories just like nominal variables only the categories can also be ordered or ranked. So if you asked someone if they liked the policies of the Democratic Party and they could answer either "Not very much", "They are OK" or "Yes, a lot" then you have an ordinal variable. Why? Because you have 3 categories, namely "Not very much", "They are OK" and "Yes, a lot" and you can rank them from the most positive (Yes, a lot), to the middle response (They are OK), to the least positive (Not very much). However, whilst we can rank the levels, we cannot place a "value" to them; we cannot say that "They are OK" is twice as positive as "Not very much" for example.
 
+```{r}
+ordinalVariables <- c("OK", "Not very much", "OK", "Yes, a lot", "Not very much") 
+```
+
 ###Interval variables 
 are variables for which their central characteristic is that they can be measured along a continuum and they have a numerical value (for example, temperature measured in degrees Celsius or Fahrenheit). So the difference between 20C and 30C is the same as 30C to 40C. However, temperature measured in degrees Celsius or Fahrenheit is NOT a ratio variable. In interval scales, addition and subtraction make sense, but multiplication and division do not. That is, 70C is not "twice as hot"" as 35C. If this is confusing, think what a negative temperature would mean, or a 0 temperature! 30C is -1 times as hot as -30C? It doesn't make sense!
 
+```{r}
+intervalVariables <- c(30,31,29,30,29,33,34,35) 
+```
+
 ###Ratio variables 
 are interval variables, but with the added condition that 0 (zero) of the measurement indicates that there is none of that variable. So, temperature measured in degrees Celsius or Fahrenheit is not a ratio variable because 0C does not mean there is no temperature. However, temperature measured in Kelvin is a ratio variable as 0 Kelvin (often called absolute zero) indicates that there is no temperature whatsoever. Other examples of ratio variables include height, mass, distance and many more. Ratio responses mean that not only is there order and spacing, but that multiplication makes sense as well. Two common examples are height and weight. A person who weighs 200 pounds weighs double what a person who weighs 100 pounds weighs. 
+
+```{r}
+ratioVariables <- c(0:10) 
+```
 
 ### Problematic Percentages
 So, are percentages nominal, ordinal, interval or ratio? Technically, they are not even ratio - you cannot double a percentage without distorting the meaning
@@ -47,59 +61,21 @@ If you are using interval or ratio scales you use parametric statistics.
 # Histograms
 are used to plot the distribution of the data
 
-here is some normally distributed data
 
 ```{r, echo=FALSE}
 x<-rnorm(1000, mean = 0, sd = 1)
-hist(x)
+hist(x, main = "normally distributed data")
 ```
 
-here the data are skewed to the right = positive skew
 ```{r, echo=FALSE}
 x<-rbeta(1000,2,5)
-hist(x)
+hist(x, main="positive/ right skewed data")
 ```
 
-here the data are skewed to the left = negative skew
 ```{r, echo=FALSE}
 x<-rbeta(1000,5,2)
-hist(x)
+hist(x, main="negative/ left skewed data")
 ```
-
-
-# Standardised Scales
-### Z-scores
-In statistics there is a standard scale the Z scale.
-Any score from any scale can be converted to Z scores 
-
-$Z = \frac{(X-M)}{SD}$
-
-X = raw score, the score on the original scale
-
-M = mean
-
-SD = standard deviation
-
-The mean Z-score is Z = 0
-
-Positive Z scores are above average
-
-Negative Z scores are below average
-
-For example  
-```{r}
-X = 99.6 # body temp for one person
-M = 98.6 # the mean for the group
-SD = 0.5 # the standard deviation for the group
-Z=(X-M)/SD; Z
-```
-This value of 2 means their score is 2 standard deviations above the mean
-
-### Percentile rank
-The percentage of scores that fall at or below a score in a distribution 
-Assume a normal distribution
-If Z = 0 then the percentile rank = 50th 
-50% of the distribution falls below the mean 
 
 #Summary Statistics
 ##Central Tendency
@@ -213,7 +189,9 @@ devsum <- if(all.equal(0L, devsum)) 0L else devsum ;devsum
 devsum/length(pointsPerGame)
 ```
 
-instead we square the deviation scores and sum them to give us a score for variance
+instead we square the deviation scores, sum them and divide by N to give us a score for variance. 
+
+That is to say we calculate mean squares because it is the sums of squares divided by N. 
 
 ```{r}
 (pointsPerGame - mean(pointsPerGame))^2
@@ -222,11 +200,48 @@ devSumSq <- sum(devSq) ; devSumSq
 variance <- devSumSq/length(pointsPerGame) ; variance
 ```
 
-Squaring however does have a problem as a measure of spread and that is that the units are all squared, where as we'd might prefer the spread to be in the same units as the original data (think of squared points scored). Hence the square root allows us to return to the original units.
+Squaring however does have a problem as a measure of spread and that is that the units are all squared, where as we'd might prefer the spread to be in the same units as the original data (think of squared points scored). Hence the square root allows us to return to the original units which is the standard deviation.
 
 ```{r}
 sqrt(variance)
 ```
+
+# Standardised Scales
+### Z-scores
+In statistics there is a standard scale the Z scale.
+Any score from any scale can be converted to Z scores 
+
+$Z = \frac{(X-M)}{SD}$
+
+X = raw score, the score on the original scale
+
+M = mean
+
+SD = standard deviation
+
+The mean Z-score is Z = 0
+
+Positive Z scores are above average
+
+Negative Z scores are below average
+
+For example  
+```{r}
+X = 99.6 # body temp for one person
+M = 98.6 # the mean for the group
+SD = 0.5 # the standard deviation for the group
+Z=(X-M)/SD; Z
+```
+This value of 2 means their score is 2 standard deviations above the mean
+
+### Percentile rank
+The percentage of scores that fall at or below a score in a distribution 
+Assume a normal distribution
+If Z = 0 then the percentile rank = 50th 
+50% of the distribution falls below the mean 
+
+
+
 
 #Correlation
 A statistical procedure used to measure and describe the relationship between two variables 
@@ -291,3 +306,348 @@ When both variables are dichotomous
 
 ###Spearman rank correlation
 When both variables are ordinal (ranked data)
+
+## Focus on Pearson correlation
+r = the degree to which X and Y vary together, relative to the degree to which X and Y vary independently. 
+
+r = (covariance of X & Y)/(variance of X & Y)
+
+There are a number of ways to calculate r e.g. 
+
+the raw score formula and
+
+the Z-score formula
+
+Remember from our calculation for variance
+
+$variance = SD^2 = MS = (SS/N)$
+
+To calculate SS:
+
+For each row, calculate the deviation score
+
+$(X-M_x)$
+
+Square the deviation scores
+
+$(X-M_x)^2$
+
+Sum the squared deviation scores
+
+$SS_x = \Sigma[(X-M_x)^2]=\Sigma[(X-M_x)*(X-M_x)]$
+
+##Sum of Cross Products
+We need to calculate the sum of cross products (SP) to get r for our correlation 
+
+for each row, calculate the deviation score on X
+$(X-M_x)$
+
+For each row, calculate the deviation score on Y
+$(X-M_y)$
+
+Then, for each row, multiply the deviation score on X by the deviation score on Y
+
+$(X-M_x) * (Y-M_y)$
+
+Then sum the "cross products"
+
+$SP = \Sigma[(X-M_x) * (Y-M_y)]$
+
+##Covariance
+Covariance measures the relationship between two variables. 
+
+Covariance = COV = SP/N
+
+The formula for covariance is: 
+$cov(X,Y) = \frac {\Sigma(X-M_x)(Y-M_y)}{N}$
+
+or for inferential statistics where the denominator becomes n-1
+
+$cov(X,Y) = \frac {\Sigma(X-M_x)(Y-M_y)}{N-1}$
+
+Covariance is not scaled, so it can't tell you the strength of that relationship. To account for this, correlation is takes covariance and scales it by the product of the standard deviations of the two variables.
+
+
+##Raw score formula
+The raw score formula is thus:
+
+$r = \frac {SP_{xy}}  {\sqrt{(SS_x * SS_y)}}$
+
+remember this r value is the degree to which X and Y vary together, relative to the degree to which X and Y vary independently. 
+
+In longer form: 
+
+$SP = \Sigma[(X-M_x) * (Y-M_y)]$
+
+$SS_x = \Sigma[(X-M_x)^2]=\Sigma[(X-M_x)*(X-M_x)]$
+
+$SS_y = \Sigma[(Y-M_y)^2]=\Sigma[(Y-M_y)*(Y-M_y)]$
+
+So the raw score formula to calculate the correlation coefficient r can be written out in two ways:
+
+$r = \frac {SP_{xy}}  {\sqrt{(SS_x * SS_y)}}$
+
+or,
+
+$r = \frac{\Sigma[(X-M_x) * (Y-M_y)]} { \sqrt{(\Sigma(X-M_x)^2 * \Sigma(Y-M_y)^2)}}$
+
+##Z-score formula
+is the sum of the product of the Z-scores divided by N
+
+$r = \frac{\Sigma(Z_x * Z_y)} {N}$
+
+first we need to calculate the Z-scores
+
+$Z_x = \frac{(X-M_x)}{SD_x}$
+
+$Z_y = \frac{(Y-M_y)}{SD_y}$
+
+where
+
+$SD_x = \sqrt \frac{(\Sigma(X-M_x)^2}{N}$
+
+$SD_y = \sqrt \frac{(\Sigma(Y-M_y)^2}{N}$
+
+###Proof of equivalence
+here the denominator is the standard deviation
+
+$Z_x= \frac{(X-M_x)}  { \sqrt \frac{(\Sigma(X-M_x)^2}{N} }$
+
+$Z_y= \frac{(Y-M_y)}  { \sqrt \frac{(\Sigma(Y-M_y)^2}{N} }$
+
+###unpacked to it's full long form
+here we have $Z_x$ multiplied by $Z_y$ divided by N
+
+\[\begin{array}{lcc} r = \frac {\frac{(X-M_x)}  { \sqrt \frac{(\Sigma(X-M_x)^2}{N} } * \frac{(Y-M_y)}  { \sqrt \frac{(\Sigma(Y-M_y)^2}{N}}}{N}
+\end{array}\]
+
+
+
+###we can pack all this back together using some algebra
+$r = \frac{\Sigma[(X-M_x) * (Y-M_y)]} { \sqrt{(\Sigma(X-M_x)^2 * \Sigma(Y-M_y)^2)}}$
+
+which can be simplified further to:
+
+$r = \frac {SP_{xy}}  {\sqrt{(SS_x * SS_y)}}$
+
+which is the raw score formula.
+
+##Variance and covariance
+Variance = MS = SS/N
+
+Covariance = COV = SP/N
+
+Correlation is standardised covariance
+
+it's standardised so the value is in the range -1 to +1
+
+###Note on the denominators
+Correlation for descriptive statistics
+
+Divide by N
+
+Correlation for inferential statistics
+
+Divide by N-1
+
+#Assumptions of Correlation
+let's consider Pearson correlation
+
+Assumptions when interpreting r:
+
+Normal distributions for X and Y 
+
+- how to detect violations? 
+
+Plot histograms and examine summary stats
+
+Linear relationship between X and Y
+
+- how to detect violations? 
+
+Examine scatterplots
+
+Homoscedasticity
+
+- how to detect violations? 
+
+Examine scatterplots
+
+Reliability of X and Y 
+
+Validity of X and Y 
+
+Random and representative sampling 
+
+###Homoscedasticity and heteroscedasticity
+In a scatterplot the vertical distance between a dot and the regression line reflects the amount of predicition error (known as the "residual")
+
+The idea of Homoscedasticity is that those residuals are not related to X. The residuals should be chance errors and not systematic. 
+
+If the residuals are related to X then we suspect some sort of confound in our study. This is termed Heteroscedasticity. 
+
+A classic example of heteroscedasticity is that of income versus expenditure on meals. As one's income increases, the variability of food consumption will increase. A poorer person will spend a rather constant amount by always eating inexpensive food; a wealthier person may occasionally buy inexpensive food and at other times eat expensive meals. Those with higher incomes display a greater variability of food consumption.
+
+```{r, echo=FALSE}
+set.seed(123456)
+x = rnorm(500,40000,10000)
+b0 = 1 # intercept chosen at your choice
+b1 = 1 # coef chosen at your choice
+h = function(x) 1+.4*x # h performs heteroscedasticity function (here I used a linear one)
+eps = rnorm(500,0,h(x))
+y = b0 + b1*x + eps
+plot(x,y)
+#abline(lsfit(x,y))
+#abline(b0,b1,col=2)
+
+```
+
+
+###Anscombe's Quartet
+Why it's critical to look at your scatterplots.
+
+Four datasets where the correlation is exactly the same.
+The datasets also have the same variance. But clearly there are differences in these datasets. 
+
+
+```{r, echo=FALSE}
+require(stats); require(graphics)
+summary(anscombe)
+
+##-- now some "magic" to do the 4 regressions in a loop:
+#ff <- y ~ x
+#mods <- setNames(as.list(1:4), paste0("lm", 1:4))
+#for(i in 1:4) {
+#  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  ## or   ff[[2]] <- as.name(paste0("y", i))
+  ##      ff[[3]] <- as.name(paste0("x", i))
+#  mods[[i]] <- lmi <- lm(ff, data = anscombe)
+#  print(anova(lmi))
+#}
+
+## See how close they are (numerically!)
+#sapply(mods, coef)
+#lapply(mods, function(fm) coef(summary(fm)))
+
+## Now, do what you should have done in the first place: PLOTS
+#op <- par(mfrow = c(2, 2), mar = 0.1+c(4,4,1,1), oma =  c(0, 0, 2, 0))
+#for(i in 1:4) {
+#  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+#  plot(ff, data = anscombe, col = "red", pch = 21, bg = "orange", cex = 1.2,
+#       xlim = c(3, 19), ylim = c(3, 13))
+#  abline(mods[[i]], col = "blue")
+#}
+#mtext("Anscombe's 4 Regression data sets", outer = TRUE, cex = 1.5)
+#par(op)
+```
+
+
+
+```{r, echo=FALSE}
+require("ggplot2")
+require("gridExtra")
+
+cor1 <- format(cor(anscombe$x1, anscombe$y1), digits=2)
+cor2 <- format(cor(anscombe$x2, anscombe$y2), digits=2)
+cor3 <- format(cor(anscombe$x3, anscombe$y3), digits=2)
+cor4 <- format(cor(anscombe$x4, anscombe$y4), digits=2)
+ 
+line1 <- lm(y1 ~ x1, data=anscombe)
+line2 <- lm(y2 ~ x2, data=anscombe)
+line3 <- lm(y3 ~ x3, data=anscombe)
+line4 <- lm(y4 ~ x4, data=anscombe)
+ 
+circle.size = 5
+colors = list('red', '#0066CC', '#4BB14B', '#FCE638')
+ 
+plot1 <- ggplot(anscombe, aes(x=x1, y=y1)) + geom_point(size=circle.size, pch=21, fill=colors[[1]]) +
+  geom_abline(intercept=line1$coefficients[1], slope=line1$coefficients[2]) +
+  annotate("text", x = 12, y = 5, label = paste("correlation = ", cor1))
+ 
+plot2 <- ggplot(anscombe, aes(x=x2, y=y2)) + geom_point(size=circle.size, pch=21, fill=colors[[2]]) +
+  geom_abline(intercept=line2$coefficients[1], slope=line2$coefficients[2]) +
+  annotate("text", x = 12, y = 3, label = paste("correlation = ", cor2))
+ 
+plot3 <- ggplot(anscombe, aes(x=x3, y=y3)) + geom_point(size=circle.size, pch=21, fill=colors[[3]]) +
+  geom_abline(intercept=line3$coefficients[1], slope=line3$coefficients[2]) +
+  annotate("text", x = 12, y = 6, label = paste("correlation = ", cor3))
+ 
+plot4 <- ggplot(anscombe, aes(x=x4, y=y4)) + geom_point(size=circle.size, pch=21, fill=colors[[4]]) +
+  geom_abline(intercept=line4$coefficients[1], slope=line4$coefficients[2]) +
+  annotate("text", x = 15, y = 6, label = paste("correlation = ", cor4))
+ 
+grid.arrange(plot1, plot2, plot3, plot4, top='Anscombe Quadrant -- Correlation Demostration')
+```
+
+#Measurement
+Reliability - do we have reliable measurements? 
+
+If I step on a scale multiple times do I get the same weight?
+
+But some values are harder to evaluate for reliability. Raw scores are imperfect, e.g. body temperature is suscpetible to systematic bias and chance error. 
+
+Classical test theory states that, in a perfect world, it would be possible to obtain a "true score" rather than a "raw score" (X) 
+
+X = true score + bias + error 
+
+A measure (X) is considered reliable as it approaches the true score
+
+The problem is we don't know the true score so we estimate reliability
+
+###Methods to estimate reliability 
+Test/re-test
+
+Parallel tests
+
+Inter-item reliability
+
+####Example of body temperature
+Can be measured in 3 ways,
+
+Orally, internally, IR wand. 
+
+The IR wand has a systematic bias in that it always tends to record a higher temperature. 
+
+```{r, echo=FALSE}
+x<-rnorm(1000, mean = 37, sd = 1)
+hist(x, xlab = "temperature in celsius",
+     main = "Orally measured body temperature")
+```
+```{r, echo=FALSE}
+x<-rnorm(1000, mean = 38, sd = 1)
+hist(x, xlab = "temperature in celsius",
+     main = "IR measured body temperature")
+```
+
+###Test/re-test
+One way to get a reliability estimate
+
+Measure everyone twice so we'll have data for X1 and X2
+
+Should be a strong correlation between the two measures otherwise you don't have a reliable measure
+
+However, if the bias is uniform then we won't detect it with the test/re-test method. So in the case of the IR thermometer reading a little high, test/re-test won't work. The correlation will be high even though there is a bias.  
+
+###Parallel tests
+Measure body temp with the wand (X1) and with the oral thermometer(X2)
+
+The correlation betweeen X1 and X2 is an estimate of reliability.
+
+AND, now the bias of the wand will be revealed because you have two tests rather than one.  
+
+###Inter-item
+the most commonly used method in the social sciences because the focus is usually on human subjects who are difficult to work with. 
+
+Test/re-test and parallel tests are time consuming
+
+Inter-item is therefore more cost efficient. 
+
+For example, suppose a 20 item survey is designed to measure extraversion 
+
+Randomly select 10 items to get sub-set A (X1)
+
+The other items become sub-set B (X2)
+
+Now we have two assessments of extraversion built into one overall survey. 
+
+If they're all getting at one personality trait then there should be a correlation between X1 and X2 which would represent an estimate of reliability. 
