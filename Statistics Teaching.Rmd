@@ -365,7 +365,12 @@ or for inferential statistics where the denominator becomes n-1
 
 $cov(X,Y) = \frac {\Sigma(X-M_x)(Y-M_y)}{N-1}$
 
-Covariance is not scaled, so it can't tell you the strength of that relationship. To account for this, correlation is takes covariance and scales it by the product of the standard deviations of the two variables.
+Covariance is not scaled, so it can't tell you the strength of that relationship. To account for this, correlation takes covariance and scales it by the product of the standard deviations of the two variables.
+
+```{r}
+cov(df$IQ,df$workingMemory) # covariance score
+cor.test(df$IQ,df$workingMemory) # correlation score
+```
 
 
 ##Raw score formula
@@ -580,7 +585,7 @@ grid.arrange(plot1, plot2, plot3, plot4, top='Anscombe Quadrant -- Correlation D
 ```
 
 #Measurement
-Reliability - do we have reliable measurements? 
+##Reliability - do we have reliable measurements? 
 
 If I step on a scale multiple times do I get the same weight?
 
@@ -651,3 +656,258 @@ The other items become sub-set B (X2)
 Now we have two assessments of extraversion built into one overall survey. 
 
 If they're all getting at one personality trait then there should be a correlation between X1 and X2 which would represent an estimate of reliability. 
+#Measurement
+##Validity 
+What is a construct? 
+
+An ideal "object" that is not directly observable as opposed to "real" observable objects
+
+For example, "intelligence" is a construct. 
+
+###How do we operationalise a construct? 
+The process of defining a construct to make it observable and quantifiable e.g. intelligence tests. 
+
+###Construct validity 
+How do we assess the validity of a construct? 
+
+Let's take an example of a construct: verbal ability in children
+
+We might operationalise this construct by using a vocabulary test.
+
+####Content validity 
+In the case of the vocabulary test we would ask does the test consist of words that children in the population and sample know? 
+
+####Convergent validity 
+Does the test correlate with other, established measures of verabal ability e.g. with reading comprehension.
+
+####Divergent validity 
+Does the test correlate less well with measures designed to test a different type of ability e.g. spatial ability, or even more extreme, the height of the student where there should very little correlation. 
+
+####Nomological validity 
+Are scores on the test consistent with more general theories, e.g. for child development and neuroscience. In that case a child with neural damage or disease to brain regions associated with language development should score lower on the test. 
+
+#Sampling
+Remember, we want our sample to be random and representative. 
+
+Let's set up a die and roll it a 1000 times, then plot the results on a histogram
+
+```{r}
+p.die <- rep(1/6,6)
+sum(p.die)
+die <- 1:6
+s <- table(sample(die, size=1000, prob=p.die, replace=T))
+lbls = sprintf("%0.1f%%", s/sum(s)*100)
+barX <- barplot(s, ylim=c(0,200))
+text(x=barX, y=s+10, label=lbls)
+
+```
+
+As expected each of the 6 sides came up approximately the same number of times.
+
+We can do something similar but with a loaded die
+
+```{r}
+p.die <- c(0.25,0.15,0.15,0.15,0.15,0.15)
+sum(p.die)
+die <- 1:6
+s <- table(sample(die, size=1000, prob=p.die, replace=T))
+lbls = sprintf("%0.1f%%", s/sum(s)*100)
+barX <- barplot(s, ylim=c(0,300))
+text(x=barX, y=s+10, label=lbls)
+
+```
+
+##Sampling error 
+The difference between the population and the sample.
+
+This is important because we can't get everyone/everything in the popualtion.  
+
+Notice that the random histogram is not perfectly random
+
+There is some fluctuation due to sampling error. 
+
+##Problem
+We don't know the population parameters 
+
+So, how do we estimate sampling error?
+
+##Estimating sampling error 
+Sampling error mainly depends on the size of the sample, relative to the size of the population. 
+
+as sample size increases, sampling error decreases.
+
+It also depends on the variance in the population (which we don't know).
+
+as variance increases, sampling error increases. 
+
+The following histogram shows how the distribution becomes more uniform as the sample size increases illustrating the effect of sample size on sampling error. 
+
+```{r,echo=FALSE}
+#p.die <- rep(1/6,6)
+#sum(p.die)
+#die <- 1:6
+#par(mfrow=c(2,3))
+
+#for(x in seq(10,110,20)) {
+#  s <- table(sample(die, size=x, prob=p.die, replace=T))
+  #lbls = sprintf("%0.1f%%", s/sum(s)*100)
+#  barX <- barplot(s)#ylim=c(0,200))
+#  main=x
+ # text(x=barX, y=s+10)#, label=lbls)
+#}
+
+par(mfrow=c(2,3))
+for(i in 1:6){
+x <- runif(10**i)
+hist(x,prob=TRUE, col="grey",ylim=c(0,2),main = paste(10**i," Draws"))
+curve(dunif(x),add=TRUE,col="red",lwd=2)}
+
+
+```
+
+
+We can check out the same effect by sampling from the normal distribtion using increasing sample sizes. As we can see the distribution becomes more normal as the sample size goes up. 
+
+```{r, echo=FALSE}
+#par(mfrow=c(2,3))
+#for(x in seq(10,1000,175)) {
+#  normDist<-rnorm(x,mean=0,sd = 1)
+#  hist(normDist,main="")
+#}
+
+#Normal Sampling
+par(mfrow=c(2,3))
+for(i in 1:6){
+x <- rnorm(10**i)
+hist(x,prob=TRUE,col="grey",ylim=c(0,.6),xlim=c(-4,4),main=paste(10**i," Draws"))
+curve(dnorm(x),add=TRUE,col="red",lwd=2)}
+```
+
+###Estimating sampling error 
+Sampling error is estimated from the size of the sample and the variance in the sample. This is under the assumption that the sample is random and representative of the population. 
+
+###Standard error
+Standard error is an estimate of the average amount of sampling error
+
+$SE = \frac{SD}{\sqrt{N}}$
+
+SE = standard error
+
+SD = standard deviation of the sample 
+
+N = Size of the sample 
+
+We can see from here that as the sample size in the denominator increases then the standard error is going to rise. 
+
+By contrast, as the standard deviation increases (which should reflect the population standard deviation) so too will the standard error. 
+
+Here's an example of taking a sample from a population that is not very variable. Note the low standard error. 
+```{r}
+population<-rnorm(1000,mean=0,sd=1)
+sd(population)
+sampleDraw<-sample(population,10)
+sd(sampleDraw)
+length(sampleDraw)
+sd(sampleDraw)/sqrt(length(sampleDraw))
+par(mfrow=c(1,2))
+hist(sampleDraw)
+hist(population)
+```
+
+Here's an example of taking a sample from a population that is variable. Note the higher standard error. 
+
+```{r}
+population<-rnorm(1000,mean=0,sd=10)
+sd(population)
+sampleDraw<-sample(population,10)
+sd(sampleDraw)
+length(sampleDraw)
+sd(sampleDraw)/sqrt(length(sampleDraw))
+par(mfrow=c(1,2))
+hist(sampleDraw)
+hist(population)
+```
+#Regression
+A regression is a statistical analysis used to predict scores on an outcome variable, based on scores on one or multiple predictor variables
+
+simple regression: one predictor variable 
+
+multiple regression: multiple predictor variables
+
+##Regression equation
+$Y = m + bX + e$
+this is the equation of a line 
+
+Y = a linear function of X
+m = intercept
+b = slope
+e = residual error
+
+other notation, more commonly used for statistics
+$Y = B_0 +B_1X_1 + e$
+
+Y = a linear function of $X_1$
+$B-0$ = intercept = regression constant 
+$B_1$ = slope = regression coefficient 
+e = residual error
+
+##Model R and R^2
+R = multiple correlation coefficient
+
+R = $r_{y'y}$
+
+The correlation between the predicted scores and the observed scores 
+
+$R^2$ the percentage of variance in Y explained by the model.
+
+###Simple regression example
+
+```{r}
+set.seed(20)
+IQ <- rnorm(250, mean = 100, sd = 10)
+workingMemory <- IQ*rnorm(250, mean = 3, sd = 0.5)/100
+df = data.frame(IQ, workingMemory)
+plot(df$workingMemory~df$IQ, xlab="IQ" , ylab="working memory", pch = 16, main = "working memory and intelligence")
+cor.test(df$IQ, df$workingMemory)
+model1 <- lm(df$workingMemory~df$IQ)
+abline(model1)
+summary(model1)
+```
+
+The estimate of the slope is 0.02599, so with every one unit increase in X there is a 0.02599 increase in Y. 
+
+The estimate of the intercept is 0.38105, the predicted score on Y when X = 0. 
+
+Thus the regression equation is 
+
+$Y=0.38105+0.02599(X)$
+
+In a simple regression the $R^2$ value 0.2323 is equal to the correlation coefficient 0.4819546 to the power of 2.
+
+```{r}
+0.4819546^2
+```
+
+The goal with regression is to produce better models so we can generate more accurate predictions
+
+Add more predictor variables and/or
+
+develop better predictor variables.
+
+###Multiple Regression
+Add in another predictor variables
+
+$Y=B_0 +B_1Y_1 + B_2Y_2 + e$
+
+Now we need to solve for $B_0$ & $B_1$ & $B_2$
+
+
+```{r}
+set.seed(20)
+IQ <- rnorm(250, mean = 100, sd = 10)
+workingMemory <- IQ*rnorm(250, mean = 3, sd = 0.5)/100
+salary <- IQ*rnorm(250, mean = 1, sd = 0.1)/100
+df = data.frame(IQ, workingMemory, salary)
+model2 <- lm(df$workingMemory~df$IQ+df$salary)
+summary(model2)
+```
