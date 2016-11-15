@@ -6,6 +6,10 @@ output:
   html_document: default
   pdf_document: default
 ---
+```{r,echo=FALSE}
+library(HH)
+```
+
 # Variables
 A variable is something that can take on different values e.g. height is a variable. The opposite of variables are constants e.g. the gravitational constant which has one value only. 
 
@@ -1374,6 +1378,213 @@ In the latter case, if this population is healthy, then no one sample should hav
 I obtained a very high sample mean.
 
 Therefore, the population is not healthy.
+
+#Central Limit Theorem
+Three principles
+
+1. The mean of a sampling distribution is the same as the mean of the population
+
+2. The standard deviation of the sampling distribution is the square root of the variance of the sampling distribution $\sigma^2 = \frac{\sigma^2}{N}$
+
+3. The shape of a sampling distribution is approximately normal if either (a) N >= 30 or (b) the shape of the population is normal. 
+
+##NHST and the Central Limit Theorem
+###Multiple regression
+
+Assume the null is true
+
+Conduct a study
+
+Calculate B, SE and t
+
+where t = B/SE
+
+the p-value is a function of t and sample size
+
+Conceptually, the t-value is a ratio of what we observed (e.g. the slope of the regression line) relative to what we would expect due to chance (e.g. the slope is zero). A ratio of 1 would be something around the null. 
+
+If the null hypothesis is true, then no one sample should have a very low or very high slope. Thus, if I obtain a very high slope I should reject the null. But what does 'very high' mean? 
+
+The very low or very high values depend on the normal distribution. Remember, the shape of a sampling distribution is approximately normal if either (a) N >= 30 or (b) the shape of the population is normal. 
+
+That means I can make probability judgements about the outcome. Note, that the third principle of the central limit theorem didn't say you get a normal distribution, rather it said you approximate one. 
+
+Instead, we get a t-distribution which comes from a family that are dependent on the sample size. As your sample size gets smaller your t-distribution gets a little wider which means you need a larger t-value to get out into the extremes to get a low p-value.
+
+This all means that our ideas of 'very high' or 'very low' come from p being < 0.05.
+
+Remember, that sampling error, and therefore standard error, is largely determined by sample size.
+
+Standard error is the standard deviation of the sampling distribution. As samples get larger they're going to squeeze in around the mean and the standard error will decrease. It's important to note that NHST is biased by sample size. 
+
+t = B/SE
+
+B = the unstandardised regression coefficient
+
+SE = standard error
+
+SE = $\sqrt{\frac{SS.Residual}{N-2}}$ 
+
+```{r, echo=FALSE}
+# Display the Student's t distributions with various
+# degrees of freedom and compare to the normal distribution
+
+x <- seq(-4, 4, length=100)
+hx <- dnorm(x)
+
+degf <- c(1, 3, 8, 30)
+colors <- c("red", "blue", "darkgreen", "gold", "black")
+labels <- c("df=1", "df=3", "df=8", "df=30", "normal")
+
+plot(x, hx, type="l", lty=2, xlab="x value",
+  ylab="Density", main="Comparison of t Distributions")
+
+for (i in 1:4){
+  lines(x, dt(x,degf[i]), lwd=2, col=colors[i])
+}
+
+legend("topright", inset=.05, title="Distributions",
+  labels, lwd=2, lty=c(1, 1, 1, 1, 2), col=colors)
+```
+
+As sample size increases, the actual mean approximates zero and the standard error shrinks as a function of sample size. 
+
+```{r}
+meanSamplingDist <- vector(length=length(i))
+SESamplingDist <- vector(length=length(i))
+for(i in 1:6){
+  x <- rnorm(10**i)
+  Zx <- (x-mean(x)/sd(x))
+  SE <- sd(Zx)/sqrt(length(Zx))
+  meanSamplingDist[i]<-(mean(Zx))
+  SESamplingDist[i]<- (SE)
+}
+
+meanSamplingDist # the mean of the sampling distribution
+SESamplingDist # the standard error of the sampling distribution
+
+
+```
+
+#F-tests
+F tests are most commonly used for two purposes:
+
+1. in ANOVA, for testing equality of means (and various similar analyses); and
+
+2. in testing equality of variances
+
+```{r, echo=FALSE}
+
+x1<-c(1:10)
+y1<-c(1:10)
+z1<-c(1:10)
+data1<-c(x1,y1,z1)
+groups1 = factor(rep(letters[1:3], each = 10))
+fit1 = lm(formula = data1 ~ groups1)
+# anova (fit1)
+fstat <- summary(fit1)$fstatistic ; fstat
+```
+
+```{r, echo=FALSE}
+x2<-c(1:10)
+y2<-c(4:13)
+z2<-c(1:10)
+data2<-c(x2,y2,z2)
+groups2 = factor(rep(letters[1:3], each = 10))
+fit2 = lm(formula = data2 ~ groups2)
+# anova (fit2)
+fstat <- summary(fit2)$fstatistic ; fstat
+```
+
+```{r, echo=FALSE}
+x3<-c(7:16)
+y3<-c(4:13)
+z3<-c(1:10)
+data3<-c(x3,y3,z3)
+groups3 = factor(rep(letters[1:3], each = 10))
+fit3 = lm(formula = data3 ~ groups3)
+# anova (fit3)
+fstat <- summary(fit3)$fstatistic ; fstat
+```
+
+```{r, echo=FALSE}
+x4<-c(19:28)
+y4<-c(4:13)
+z4<-c(1:10)
+data4<-c(x4,y4,z4)
+groups4 = factor(rep(letters[1:3], each = 10))
+fit4 = lm(formula = data4 ~ groups4)
+# anova (fit4)
+fstat <- summary(fit4)$fstatistic ; fstat
+
+```
+
+```{r, echo=FALSE}
+par( mfrow = c(2,2))
+boxplot(x1,y1,z1, horizontal = TRUE, ylim=c(0,30))
+boxplot(x2,y2,z2, horizontal = TRUE, ylim=c(0,30))
+boxplot(x3,y3,z3, horizontal = TRUE, ylim=c(0,30))
+boxplot(x4,y4,z4, horizontal = TRUE, ylim=c(0,30))
+
+```
+
+If the null hypothesis (equality of population means) were true, you'd expect some variation in sample means, and would typically expect to see F ratios roughly around 1. Smaller F statistics result from samples that are closer together than you'd typically expect, so you aren't going to conclude the population means differ.
+
+That is, for ANOVA, you'll reject the hypothesis of equality of means when you get unusually large F-values and you won't reject the hypothesis of equality of means when you get unusually small values (it may indicate something, but not that the population means differ).
+
+```{r}
+x<-seq(0,5,0.01); plot(x,df(x,df1=5,df2=5), type="l")
+```
+
+```{r}
+x<-seq(0,5,0.01); plot(x,df(x,df1=2,df2=27), type="l")
+```
+
+This illustration shows that we only want to reject when F is in its upper tail.
+
+```{r, echo=FALSE}
+fstat <- summary(fit4)$fstatistic
+
+#library(HH)
+old.omd <- par(omd=c(.05,.88, .05,1))
+F.setup(df1=fstat['numdf'], df2=fstat['dendf'])
+F.curve(df1=fstat['numdf'], df2=fstat['dendf'], col='skyblue')
+F.observed(fstat['value'], df1=fstat['numdf'], df2=fstat['dendf'])
+par(old.omd)
+```
+
+#Probability Density Functions 
+The "bell curve" shape is governed by the PDF. However, the actual "y"-value of this curve is itself more or less meaningless. The integral of the PDF $f(x)$ gives the probability that your random variable is less than some value: 
+
+$P(x<X) = \int_{\infty}^{X}f(x)dx$. 
+
+This is known as the CDF, or cumulative distribution function. By the fundamental theorem of calculus, the PDF is then the derivative of the CDF; that is, the PDF is the derivative of a function that returns a probability. So what is that intuitively? Honestly... it's not really anything. The "units" of the vertical axis in the PDF plot don't lead to anything intuitive; they are meaningful, but only in a derived, mathematical sense.
+
+The area under the pdf equals 1. If the pdf value $f(x)$ exceeds 1 for some and indeed many values of $x$, that is perfectly fine: but $f(x)$ cannot exceed 1 for all $x$ in an interval $I$ of length exceeding 1. If the latter condition were to hold, then:
+
+$\int_{I}^{}f(x)dx$ = area under pdf in interval I > 1
+
+in violation of the constraint that the total area is 1. The value of $f(x)$ is not a probability. The units of $f(x)$ are probability per unit length and you must multiply by length (more generally, find an area) to get a probability.
+
+As a consequence, some people wish to think that $f(X)$ is the probability that $x=X$, but this is untrue for continuous distributions $(P(x=X)=0)$. However, for the PDF's discrete analog, the Probability Mass Function (PMF), this statement is quite true.
+
+```{r,echo=FALSE}
+set.seed(3000)
+xseq<-seq(-4,4,.01)
+densities<-dnorm(xseq, 0,1)
+cumulative<-pnorm(xseq, 0, 1)
+randomdeviates<-rnorm(1000,0,1)
+ 
+par(mfrow=c(1,2), mar=c(3,4,4,2))
+
+plot(xseq, densities, col="darkgreen",xlab="", ylab="Density", type="l",lwd=2, cex=2, main="PDF of Standard Normal", cex.axis=.8)
+
+plot(xseq, cumulative, col="darkorange", xlab="", ylab="Cumulative Probability",type="l",lwd=2, cex=2, main="CDF of Standard Normal", cex.axis=.8)
+
+#hist(randomdeviates, main="Random draws from Std Normal", cex.axis=.8, xlim=c(-4,4))
+```
+
+
 
 ##Interactions
 Interactions allow us assess the extent to which the association between one predictor and the outcome depends on a second predictor. 
