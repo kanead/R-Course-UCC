@@ -3,8 +3,8 @@ title: "Statistics Teaching"
 author: "Adam Kane"
 date: "4 November 2016"
 output:
-  html_document: default
   pdf_document: default
+  html_document: default
 ---
 ```{r,echo=FALSE}
 library(HH)
@@ -1552,6 +1552,13 @@ F.curve(df1=fstat['numdf'], df2=fstat['dendf'], col='skyblue')
 F.observed(fstat['value'], df1=fstat['numdf'], df2=fstat['dendf'])
 par(old.omd)
 ```
+
+2) F tests for equality of variance* (based on variance ratios). Here, the ratio of two sample variance estimates will be large if the numerator sample variance is much larger than the variance in the denominator, and the ratio will be small if the denominator sample variance is much larger than variance in the numerator.
+
+That is, for testing whether the ratio of population variances differs from 1, you'll want to reject the null for both large and small values of F.
+
+* (Leaving aside the issue of the high sensitivity to the distributional assumption of this test (there are better alternatives) and also the issue that if you're interested in suitability of ANOVA equal-variance assumptions, your best strategy probably isn't a formal test.)
+
 
 #Probability Density Functions 
 The "bell curve" shape is governed by the PDF. However, the actual "y"-value of this curve is itself more or less meaningless. The integral of the PDF $f(x)$ gives the probability that your random variable is less than some value: 
