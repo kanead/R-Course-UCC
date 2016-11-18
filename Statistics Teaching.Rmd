@@ -1466,6 +1466,41 @@ SESamplingDist # the standard error of the sampling distribution
 
 ```
 
+#Confidence Intervals 
+##Confidence intervals around sample means 
+
+All sample statistics e.g. a sample mean, are point estimates i.e. one point from a sample distribution. More specifically, a sample mean represents a single point in a sampling distribution. Any one sample will never be perfect. 
+
+The logic of confidence intervals is to report a range of values, rather than a single value. In other words, report an interval estimate rather than a point estimate. 
+
+We can define a confidence interval as an interval estimate of a population parameter, based on a random sample. The degree of confidence, e.g. 95%, represents the probability that the interval captures the true population parameter. 
+
+The main argument for interval estimates is the reality of sampling error. Sampling error implies that point estimates will vary from one study to the next (we use standard error to get a measure of sampling error). A researcher will therefore be more confident about accuracy with an interval estimate. 
+
+Below we can see that if we take a sample mean from a normal distribution we get different values each time due to sampling error. However, because our sample size is relatively big (30), this is quite small.
+```{r}
+x<-rnorm(10000,100,10)
+mean(x)
+y <- replicate(10, {
+  mm <- sample(x,30)
+  mean(mm)
+  print(mean(mm))
+  })
+hist(y)
+```
+
+But if we reduce sample size there's more fluctuation in the point estimates i.e. the sample means. 
+
+```{r}
+x<-rnorm(10000,100,10)
+mean(x)
+y <- replicate(10, {
+  mm <- sample(x,10)
+  mean(mm)
+  print(mean(mm))
+  })
+hist(y)
+```
 #F-tests
 F tests are most commonly used for two purposes:
 
@@ -1591,7 +1626,50 @@ plot(xseq, cumulative, col="darkorange", xlab="", ylab="Cumulative Probability",
 #hist(randomdeviates, main="Random draws from Std Normal", cex.axis=.8, xlim=c(-4,4))
 ```
 
+#t-test
+t-Test to compare the means of two groups under the assumption that both samples are random, independent, 
+and come from normally distributed population with unknown but equal variances
 
+To solve this problem we must use to a Student's t-test with two samples, assuming that the two samples are 
+taken from populations that follow a Gaussian distribution (if we cannot assume that, we must solve this problem 
+using the non-parametric test called Wilcoxon-Mann-Whitney test). Before proceeding with the t-test, it is 
+necessary to evaluate the sample variances of the two groups, using a Fisher's F-test to verify the 
+homoskedasticity (homogeneity of variances). In R you can do this in this way:
+
+```{r}
+a = c(175, 168, 168, 190, 156, 181, 182, 175, 174, 179)
+b = c(185, 169, 173, 173, 188, 186, 175, 174, 179, 180)
+
+var.test(a,b)
+```
+
+We obtained p-value greater than 0.05, then we can assume that the two variances are homogeneous. 
+Indeed we can compare the value of F obtained with the tabulated value of F for alpha = 0.05, degrees of freedom of numerator = 9, 
+and degrees of freedom of denominator = 9, using the function qf(p, df.num, df.den):
+
+
+```{r}
+qf(0.95, 9, 9)
+```
+
+Note that the value of F computed is less than the tabulated value of F, which leads us to accept the null hypothesis of 
+homogeneity of variances.NOTE: The F distribution has only one tail, so with a confidence level of 95%, p = 0.95. 
+Conversely, the t-distribution has two tails, and in the R's function qt(p, df) we insert a value p = 0975 when you're testing 
+a two-tailed alternative hypothesis. Then call the function t.test for homogeneous variances (var.equal = TRUE) and 
+independent samples (paired = FALSE: you can omit this because the function works on independent samples by default) in this way:
+
+```{r}
+t.test(a,b, var.equal=TRUE, paired=FALSE)
+```
+
+We obtained p-value greater than 0.05, then we can conclude that the averages of two groups are significantly similar. 
+Indeed, the value of t-computed is less than the tabulated t-value for 18 degrees of freedom, which in R we can calculate:
+  
+```{r}
+qt(0.975, 18)
+```
+
+This confirms that we can accept the null hypothesis $H_0$ of equality of the means.
 
 ##Interactions
 Interactions allow us assess the extent to which the association between one predictor and the outcome depends on a second predictor. 
