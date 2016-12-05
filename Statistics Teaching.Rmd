@@ -8,6 +8,7 @@ output:
 ---
 ```{r,echo=FALSE}
 library(HH)
+library(psych)
 ```
 
 # Variables
@@ -1157,13 +1158,14 @@ The probability of the data given the null hypothesis is true. This is the p-val
 
 #4 possible outcomes of NHST
 Either the null is true or it's false and then, as scientists, we have to successfully pick this out.
-```{r, echo=FALSE}
-NHST <- matrix(c("Correct decision","Type 1 error (false alarm)","Type 2 error (miss)","Correct decision"),ncol=2,nrow=2)
- colnames(NHST) <- c("Retain Null","Reject Null")
- rownames(NHST) <- c("Null is true","Null is false")
- NHST <- as.table(NHST)
- NHST
-```
+
+|               | Retain Null                | Reject Null         |
+|:-------------:|----------------------------|---------------------|
+| Null is true  | Correct decision           | Type 2 error (miss) |
+| Null is false | Type 1 error (false alarm) | Correct decision    |
+
+
+
 
 ![](C:\\Users\\akane\\Desktop\\Science\\Teaching\\R-Course-UCC\\NHST.jpg)
 
@@ -1227,7 +1229,7 @@ $p < 0.05$ is considered standard but still arbitrary.
 Problems arise when p is close to 0.05 but not less than 0.05. p-hacking etc. 
 
 ###3 - Yokel local test
-Many researchers use NHST because it#s the only approach they know. NHST encourages weak hypothesis testing. 
+Many researchers use NHST because it is the only approach they know. NHST encourages weak hypothesis testing. 
 
 ###4 - Error prone
 Type 1 errors
@@ -1501,6 +1503,317 @@ y <- replicate(10, {
   })
 hist(y)
 ```
+
+#The General Linear Model 
+The mathematical framework used in many common statistical analyses, including multiple regression. ANOVA is typically presented as distinct from multiple regression but it IS a multiple regression.  
+
+##Characteristics of GLM
+Linear: pairs of variables are assumed to have linear relations 
+
+Additive: if one set of variables predict another variable, the effects are thought to be additive. 
+
+But! This does not preclude testing non-linear or non-additive effects. We can trick the GLM into testing for these. 
+
+So GLM can accommodate such tests, for example, by transformation of variables so non-linear becomes linear or by moderation analysis where we trick the GLM into testing non-additive effects. 
+
+##GLM Example with non-additive effects 
+$Y=B_o+B_1X_1+B_2X_2+B_3X_3+e$
+
+Y=faculty salary
+
+X1=years since PhD
+
+X2=number of publications 
+
+X3=(years x publications) 
+
+Here we're looking a a non-additive effect between number of publications and years since PhD. We might expect that number of publications matters more for early stage researchers. Note that the regression equation is still linear and additive,  the non-additive part is hidden away in X3. 
+
+#GLM Example with categorical predictors (ANOVA)
+One-way ANOVA
+$Y=B_0+B_1X_1+e$
+
+Y= faculty salary
+
+X1=gender 
+
+Factorial ANOVA (factorial because we have multiple predictors)
+$Y=B_o+B_1X_1+B_2X_2+B_3X_3+e$
+
+Y= faculty salary
+
+X1= gender
+
+X2= race
+
+X3= interaction (gender x race)
+
+Here we have an interaction between two categorical predictors.  
+
+##ANOVA
+Appropriate when the predictors (IVs) are all categorical and the outcome (DV) is continuous
+
+Most common application is to analyse data from randomised experiments. 
+
+More specifically, randomised experiements that generate more than 2 means. If there are only 2 means then we would use a t-test.
+
+#Dummy Coding 
+A system to code categorical predictors in a regression analysis. 
+
+For example, if we have a categorical predictor variable with 4 levels and we use it to predict the dependent variable. 
+
+For instance, the area of research is a psychology department has 4 levels, cognitive, clinical, developmental and social. The number of publications is the dependent variable. 
+
+We can dummy code the 4 levels so that we work with numbers instead of the category names. 
+
+Area| D1 | D2 | D3
+------------- | ------------- |-------------|-------------
+cognitive| 0 | 0 | 0
+clinical| 1 | 0 | 0
+developmental| 0 | 1 | 0
+social| 0 | 0 | 1
+
+We're using cognitive as the reference group i.e. it gets zeroes across the board. We have 3 dummy codes because We have 4 levels for the grouping variable, the independent variable. It's the number of groups - 1. The regression constant i.e. the predicted score when all the Xs are zero, now has a clear meaning, it is the predicted score for the cognitive group.
+
+##Regression model 
+$\hat{Y} = B_0+B_1(D1)+B_2(D2)+B_3(D3)$
+
+```{r}
+setwd("C:\\Users\\akane\\Desktop\\Science\\Teaching\\R-Course-UCC")
+hsb2 <- read.csv("hsb2.csv",header = T,sep = ",")
+head(hsb2)
+names(hsb2)[names(hsb2)=="race"] <- "field"
+names(hsb2)[names(hsb2)=="write"] <- "publications"
+head(hsb2)
+
+# creating the factor variable
+hsb2$field.f <- factor(hsb2$field)
+is.factor(hsb2$field.f)
+summary(lm(publications ~ field.f, data = hsb2))
+mean(hsb2$publications[hsb2$field==1])
+mean(hsb2$publications[hsb2$field==2])
+mean(hsb2$publications[hsb2$field==3])
+mean(hsb2$publications[hsb2$field==4])
+```
+
+The 46.458 value is the mean number of publications for our reference level i.e. that for cognition. The 11.542 represents the change in Y when we have a 1 unit increase in X. But think about what this means. A 1 unit increase in X moves us from cognitive to clinical. So this means that clinical has on average 11.542 more publications than cognitive. If we refer to the mean values this makes sense for cognitive has a mean of 46.458 and clinical has a value of 58. The developmental level differs from congitive by 1.742 following the same logic this makes sense. 
+
+We can refer to the p-values to test whether these differences are significant. For instance, the difference between cognitive and developmental is not significant. 
+
+If we wanted to look at the pairwise differences between the other levels we'd have to recode using a different level than cognitive as the reference group. 
+
+We can change the coding so that the intercept in the model is not the predicted score for cognitive but rather the predicted score for all professors across all groups. That kind of coding is called effects coding. Here is an example of unweighted effects coding: 
+
+Area| C1 | C2 | C3
+------------- | ------------- |-------------|-------------
+cognitive| -1 | -1 | -1
+clinical| 1 | 0 | 0
+developmental| 0 | 1 | 0
+social| 0 | 0 | 1
+
+The predicted score on Y when X = 0 now represents the average across all these groups. 
+
+
+```{r}
+tapply(hsb2$publication, hsb2$field, mean)
+mean(tapply(hsb2$publication, hsb2$field, mean))
+lm(publications ~ field.f, data = hsb2, contrasts = list(b = contr.sum))
+
+```
+
+The intercept in unweighted effects coding won't exactly match the mean for the whole group because it doesn't take into account the different sizes for the levels within the groups. Here we have a different number of professors in each group. The coefficients now tell us the difference between the overall mean and each of the levels. Again, if we wanted to see the difference between cognitive and the overall mean we'd have to recode using some other level as the reference group.
+
+```{r}
+length(hsb2$publications[hsb2$field==1])
+length(hsb2$publications[hsb2$field==2])
+```
+
+We can use weighted effects coding to get the regression constant to be exactly equal to the grand mean of all of the data. And as it suggests we just weight the codings by the number of professors in each group. 
+
+Area| C1 | C2 | C3
+------------- | ------------- |-------------|-------------
+cognitive| -Nclin/Ncog | -Ndev/Ncog | -Nsoc/Ncog
+clinical| Nclin/Ncog | 0 | 0
+developmental| 0 | Ndev/Ncog | 0
+social| 0 | 0 | Nsoc/Ncog
+
+#Moderation analysis 
+A moderator has influence over the other effects/ relationships. It is synonymous with an interaction. 
+
+The way to think about what an interaction is, is that if you were to explain your findings to someone you would use the word 'depends'. Lets say someone asks you, "if people research a product, do they purchase it?" You might respond, "Well, it depends. For men, if they research a product, they typically end up buying one, but women enjoy looking at and thinking about products for its own sake; often, a woman will research a product, but have no intention of buying it. So, the relationship between researching a product and buying that product depends on sex." In this story, there is an interaction between product research and sex, or sex moderates the relationship between research and purchasing.
+
+##Example
+Stereotype threat is a situational predicament in which people are or feel themselves to be at risk of conforming to stereotypes about their social group. For instance, women will perform worse in a test if they are told their group tends to perform worse beforehand.
+
+X = experimental manipulation that is stereotype threat.
+
+Y= Behavioural outcome in the form of an IQ test.
+
+Z= Moderator, in the form of working memory capacity (WMC). 
+
+That is to say if you have a strong WMC you will be able to buffer the effect of the stereotype threat such that you're not as affected by it. 
+
+In general, a moderator variable (Z) will enhance a regression model if the relationship between X and Y varies as a function of Z. So in our example, maybe the buffering effect of WMC works for people on the lower end of the WMC but not for people on the higher end. 
+
+Moderation can be used in experimental research. The manipulation of an IV (X) causes change in a DV (Y). A moderator variable (Z) implies that the effect of the IV on the DV (X on Y) is NOT consistent across the distribtuion of Z. 
+
+It can also be used in correlational research where we assume a correlation between X and Y. A moderator variable (Z) implies that the correlation between X and Y is NOT consistent across the distribution of Z.
+
+There's always the possiblity that there's a moderator varialbe that the researchers didn't test. So if X and Y are correlated, then we can use regression to predict Y from x:
+
+$Y=B_0+B_1X+e$
+
+If there is a moderator, Z, then $B_1$ will NOT be representative across all Z. That is the relationship between X and Y is different at different levels of Z. 
+
+##Moderation Model 
+If both X and Z are continuous:
+
+$Y=B_0+B_1X+B_2Z+B_3(X*Z)+e$
+
+The GLM is being tricked into testing for a non-additive effect when it analyses $B_3$. 
+
+If X is categorical (3 levels in this case) and Z is continuous:
+
+$Y=B_0+B_1(D1)+B_2(D2)+B_3Z+B_4(D1*Z)+B_5(D2*Z)+e$
+
+Here we will need to use dummy coding. We have 3 levels which means we need to use N-1 or 2 codes, D1 and D2. Then to represent moderation we will need two product components ($B_4(D1*Z)+B_5(D2*Z)$). 
+
+##How to test for moderation
+If both X and Z are continuous:
+
+Model 1: No moderation
+
+$Y=B_0+B_1X+B_2Z+e$
+
+Model 2: Moderation
+
+$Y=B_0+B_1X+B_2Z+B_3(X*Z)+e$
+
+Then compare both models and see if model 2 is a better fit. If it is then you have a moderator effect. You can also look at the significance of the $B_3$ coefficient using the p-value. 
+
+If X is categorical and Z is continuous:
+
+Model 1: No moderation
+
+$Y=B_0+B_1(D1)+B_2(D2)+B_3Z+e$
+
+Model 2: Moderation
+
+$Y=B_0+B_1(D1)+B_2(D2)+B_3Z+B_4(D1*Z)+B_5(D2*Z)+e$
+
+Again compare both models and see if model 2 is a better fit. If it is then you have a moderator effect. But here we can't look at the one coefficient for significance because there are two elements that carry the potential moderator effect, thus we have to use model selection.
+
+We can compare Model and Model 2 in terms of overall variance explained, that is, $R^2$. And NHST is available for this comparison which allows us to make that statement that there is a significantly different change when we add the moderator (or not).
+
+As we noted earlier, we can evaluate the B values for predictors associated with the moderation effect. 
+
+$(X*Z)$ for the continuous case
+
+$(D1*Z)$ and $(D2*Z)$ for the categorical case
+
+##Back to the example
+X = experimental manipulation that is stereotype threat.
+
+Y= Behavioural outcome in the form of an IQ test.
+
+Z= Moderator, in the form of working memory capacity (WMC). 
+
+Students completed a working memory task. Students were then assigned at random to one of 3 experimental conditions. 
+
+Explicit threat (n=50)
+
+Implicit threat (n=50)
+
+Control (n=50)
+
+Students then completed an IQ test. 
+
+Since the experimental condition is categorical dummy coding is required. 
+
+Let the control group be the referent 
+
+Let D1 be the Explicit threat 
+
+Let D2 be the Implicit threat
+
+```{r}
+setwd("C:\\Users\\akane\\Desktop\\Science\\Teaching\\R-Course-UCC")
+data<-read.table("lab7.txt")
+describeBy(data,data$condition)
+# look at the row variable IQ to see if there has been an effect of the threat on IQ. 
+#We can see there is. 
+
+# we can look at the correlation of IQ on working memory by condition
+library(plyr)
+ddply(data, .(condition), summarise, "corr" = cor(IQ, WM, method = "spearman"))
+#this indicates that the condition is having a strong effect
+```
+
+Here is the result of applying model 1 without moderation terms
+```{r}
+model1<-lm(IQ~WM+D1+D2,data=data)
+summary(model1)
+```
+
+59.78635 is the predicted score on Y when all Xs are 0. That is the predicted IQ for someone who had a 0 on the working memory task and is in the control condition. 
+
+The coefficients for D1 and D2 show that both threat conditions are having a strong negative effect. 
+
+Here is the result of applying model 2 with the moderation terms
+```{r}
+model2<-lm(IQ~WM+D1+D2+(WM*D1)+(WM*D2),data=data)
+summary(model2)
+```
+
+0.1203 is the coefficent for working memory. That's the slope relating working memory to IQ for the control condition.
+
+0.4716 is the difference in slope between the control condition and the threat 1 condition. Before, for our dummy code example, this unit change in X showed the predicted difference in means. Now because we have moderation worked in, it is the predicted difference in slopes. And that is we want to test. Indeed, there are significant moderation effects (p = 0.00459 for $WM*D1$ and p = 0.03529 for $WM*D2$). 
+
+We can also perform a model comparison to test for the significance of the moderation terms in the model 2 verus model 1.
+
+```{r}
+anova(model1,model2)
+```
+
+The p-value here shows that there is a signifcant difference in the amount of variation explained by the moderation effect. 
+
+By plotting the slopes of these moderation effects we can see if there is evidence of the effects. If the slopes are not parallel we have evidence of moderation because it shows that the effect (i.e. WM) is not consistent across groups.
+
+The three lines are similar at high values of WM which is what we initially predicted. High values of WM are meant to buffer the effect of the threat conditions. 
+
+```{r}
+color <- c("red","green","blue")
+plot1<-ggplot(data, aes(x = WM, y = IQ)) + stat_smooth(method="lm", se=F) +
+  geom_point(aes(color=condition))
+
+plot1+theme_bw() + 
+  theme(plot.background = element_blank(),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line.x = element_line(color="black", size = 2),
+        axis.line.y = element_line(color="black", size = 2))
+
+
+
+plot2<-ggplot(data, aes(x = WM, y = IQ)) + 
+  geom_smooth(aes(group=condition), method="lm", se=T, color="black", fullrange=T) +
+  geom_point(aes(color=condition))
+
+
+plot2+theme_bw() + 
+  theme(plot.background = element_blank(),
+         panel.grid.major = element_blank(),
+         panel.grid.minor = element_blank() )+
+  theme(panel.border= element_blank())+
+  theme(axis.line.x = element_line(color="black", size = 2),
+        axis.line.y = element_line(color="black", size = 2))
+
+```
+In sum, all that is implied by "interaction" (or "moderator") is that the way one predictor relates to the outcome depends on the level of the other predictor.
+
+
+
 #F-tests
 F tests are most commonly used for two purposes:
 
