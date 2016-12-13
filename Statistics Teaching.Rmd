@@ -6,9 +6,13 @@ output:
   pdf_document: default
   html_document: default
 ---
-```{r,echo=FALSE}
+```{r message=FALSE,echo=FALSE}
 library(HH)
 library(psych)
+library(multilevel)
+library(lsr)
+library(car)
+library(QuantPsyc)
 ```
 
 # Variables
@@ -1359,7 +1363,7 @@ A sampling Distributions is a distribution of sample statistics, obtained from m
 
 Sampling distributions are important in statistics because they provide a major simplification on the route to statistical inference. More specifically, they allow analytical considerations to be based on the sampling distribution of a statistic, rather than on the joint probability distribution of all the individual sample values.
 
-It's important to realise that a sampling distribution is  hypothetical. Instead we will only have a single sample.
+It's important to realise that a sampling distribution is hypothetical. Instead we will only have a single sample.
 
 Let's assume a mean is calculated from a sample, obtained randomly from the population. 
 
@@ -1502,6 +1506,387 @@ y <- replicate(10, {
   print(mean(mm))
   })
 hist(y)
+```
+
+The width of a confidence interval is influenced by sample size (as sample size increases you can be more confident that the interval will contain the estimate) and variance in the population (and sample).That is to say that standard error influences the width of the confidence intervals. 
+
+We can see this below in that the sample of 10 points from the original data gives a much wider confidence interval than the sample of 30 data points. The width of the intervals can be embarrassingly large. 
+
+```{r}
+x<-rnorm(10000,100,10)
+mean(x)
+smallSample <- sample(x,10)
+largeSample <- sample(x,30)
+t.test(smallSample)
+t.test(largeSample)
+```
+
+
+##How to calculate the confidence interval 
+Upper bound = M + t(SE)
+
+Lower bound = M - t(SE)
+
+$SE = \frac{SD}{\sqrt(N)}$
+
+t depends on the level of confidence desired (e.g. 95% which corresponds to an alpha of 0.05) and the sample size. 
+The sampling distribution we assume depends on the exact size of your sample where the width of your sampling distribution gets a little bit wider with smaller samples.
+Smaller samples are going to give you more standard error so if you want 95% of that distribution then you'll have to go further out in the distribution because you'll need a slightly higher t-value. 
+
+```{r, echo=FALSE}
+# Display the Student's t distributions with various
+# degrees of freedom and compare to the normal distribution
+
+x <- seq(-4, 4, length=100)
+hx <- dnorm(x)
+
+degf <- c(1, 3, 8, 30)
+colors <- c("red", "blue", "darkgreen", "gold", "black")
+labels <- c("df=1", "df=3", "df=8", "df=30", "normal")
+
+plot(x, hx, type="l", lty=2, xlab="x value",
+  ylab="Density", main="Comparison of t Distributions")
+
+for (i in 1:4){
+  lines(x, dt(x,degf[i]), lwd=2, col=colors[i])
+}
+
+legend("topright", inset=.05, title="Distributions",
+  labels, lwd=2, lty=c(1, 1, 1, 1, 2), col=colors)
+```
+
+
+Let's do a worked example where we have a sample of 1000 men drawn from a population whose weights were measured. We find that the average man in our sample is 180 pounds, and the standard deviation of the sample is 30 pounds. What is the 95% confidence interval? 
+
+```{r}
+sampleWeights<-rnorm(1000,180,30)
+mean(sampleWeights)
+
+#first find the SE
+standardError<-sd(sampleWeights)/sqrt(length(sampleWeights));standardError
+
+#Find critical value. The critical value is a factor used to compute the margin of error. To express the critical value as a t score (t*), follow these steps.
+
+alpha<-1-95/100; alpha
+criticalProbability<-1-alpha/2;criticalProbability
+degreesOfFreedom<-length(sampleWeights)-1; degreesOfFreedom
+
+#The critical value is the t statistic having 999 degrees of freedom and a cumulative probability equal to 0.975. From the t Distribution Calculator, we find that the critical value is 1.96.
+critcalValue<-qt(.975,df=999);critcalValue
+
+#Compute margin of error (ME): ME = critical value * standard error = 1.96 * 0.95 = 1.86
+
+confidenceInterval<-critcalValue*standardError;confidenceInterval
+
+#The range of the confidence interval is defined by the sample statistic +/- margin of error. And the uncertainty is denoted by the confidence level. Therefore, this 95% confidence interval is:
+mean(sampleWeights) + confidenceInterval
+mean(sampleWeights) - confidenceInterval
+
+#compare with inbuilt function
+t.test(sampleWeights)
+
+```
+
+We can do the exact same calculation again only this time with a smaller sample size to see what effect that will have on the confidence intervals.
+
+```{r,echo=FALSE}
+sampleWeights<-rnorm(100,180,30)
+mean(sampleWeights)
+
+#first find the SE
+standardError<-sd(sampleWeights)/sqrt(length(sampleWeights));standardError
+
+#Find critical value. The critical value is a factor used to compute the margin of error. To express the critical value as a t score (t*), follow these steps.
+
+alpha<-1-95/100; alpha
+criticalProbability<-1-alpha/2;criticalProbability
+degreesOfFreedom<-length(sampleWeights)-1; degreesOfFreedom
+
+#The critical value is the t statistic having 999 degrees of freedom and a cumulative probability equal to 0.975. From the t Distribution Calculator, we find that the critical value is:
+critcalValue<-qt(.975,df=999);critcalValue
+
+#Compute margin of error (ME): ME = critical value * standard error = 1.96 * 0.95 = 1.86
+
+confidenceInterval<-critcalValue*standardError;confidenceInterval
+
+#The range of the confidence interval is defined by the sample statistic +/- margin of error. And the uncertainty is denoted by the confidence level. Therefore, this 95% confidence interval is:
+mean(sampleWeights) + confidenceInterval
+mean(sampleWeights) - confidenceInterval
+
+#compare with inbuilt function
+t.test(sampleWeights)
+
+```
+
+# Confidence Intervals around regression coefficients
+All sample statistics, e.g. a regression coefficient (B), are point estimates and can have associated confidence intervals. 
+
+More specifically, a regression coefficient, represents a single point in a sampling distribution. It would be better to report interval estimates. 
+
+In regression, $t=\frac{B}{SE}$ and this t will come from a distribution of t. 
+
+Let's run through an example of how to get the confidence interval for the slope of a regression line.
+
+First off we need to get the slope of the line which is our point estimate sample statistic around which we'll construct our confidence interval
+
+```{r}
+#library(ISwR)
+fit <- lm(mpg ~  wt, data = mtcars)
+summary(fit)
+plot(mpg ~  wt, data = mtcars)
+abline(fit)
+slope<-coef(fit)["wt"] 
+```
+
+Then we select a confidence interval, here we'll use 95%. 
+
+Then we have to find the standard error of our regression slope:
+
+$SE_{slope} = \frac{\sqrt{\frac{\Sigma(Y-Y')^2}{N}}}{\sqrt{\Sigma(x- \bar{x})^2}}$
+
+```{r}
+#library(ISwR)
+fit <- lm(mpg ~  wt, data = mtcars)
+mtcars$mpg-fitted(fit)
+(mtcars$mpg-fitted(fit))^2
+sum((mtcars$mpg-fitted(fit))^2)
+sum((mtcars$mpg-fitted(fit))^2)/(length(mtcars$mpg)-2)
+sqrt(sum((mtcars$mpg-fitted(fit))^2)/(length(mtcars$mpg)-2))
+
+mtcars$wt-mean(mtcars$wt)
+(mtcars$wt-mean(mtcars$wt))^2
+sum((mtcars$wt-mean(mtcars$wt))^2)
+sqrt(sum((mtcars$wt-mean(mtcars$wt))^2))
+
+
+sqrt(sum((mtcars$mpg-fitted(fit))^2)/(length(mtcars$mpg)-2)) / sqrt(sum((mtcars$wt-mean(mtcars$wt))^2))
+
+SESlope <- sqrt(sum((mtcars$mpg-fitted(fit))^2)/(length(mtcars$mpg)-2)) / sqrt(sum((mtcars$wt-mean(mtcars$wt))^2))
+
+
+```
+
+As before, for the confidence interval of a mean we need to find the critical value. The critical value is a factor used to compute the margin of error. With simple linear regression, to compute a confidence interval for the slope, the critical value is a t score with degrees of freedom equal to n - 2. To find the critical value, we take these steps.
+
+```{r}
+
+alpha<-1-95/100; alpha
+criticalProbability<-1-alpha/2;criticalProbability
+degreesOfFreedom<-length(mtcars$mpg)-2; degreesOfFreedom
+
+#The critical value is the t statistic having 30 degrees of freedom and a cumulative probability equal to 0.975. From the t Distribution Calculator, we find that the critical value is:
+critcalValue<-qt(.975,df=30);critcalValue
+
+# Compute margin of error (ME): ME = critical value * standard error = 
+ME<-critcalValue * SESlope; ME
+
+#Specify the confidence interval. The range of the confidence interval is defined by the sample statistic +/- margin of error. And the uncertainty is denoted by the confidence level.
+
+slope + ME
+slope - ME
+
+# Therefore, the 95% confidence interval is -6.486308 to -4.202635. That is, we are 95% confident that the true slope of the regression line is in the range defined by -6.486308 to -4.202635.
+
+# we can again check this against the inbuilt function
+confint(fit, "wt", level = 0.95)
+
+```
+
+In general, if the confidence intervals of the slope do not overlap with zero then we can infer a significant p-value for the slope. 
+
+```{r}
+library(ggplot2)
+plotCI = ggplot(mtcars,aes(x=mtcars$wt,y=mtcars$mpg)) + geom_point() + geom_smooth(method="lm");plotCI
+```
+
+#Multiple Regression
+In a multiple regression there are multiple predictors (X1,X2,X3...Xn), in contrast to a simple regression where there's only one predictor.
+
+$\hat{Y} = B_0 + B_1X_1 + B_2X_2 + ... B_nX_n$
+
+$\hat{Y}$ = predicted value on the outcome variable Y
+
+$B_0$ = predicted value on Y when all X = 0 
+
+$X_k$ = predictor variables
+
+$B_k$ = unstandardised regression coefficients
+
+$Y - \hat{Y}$ = residual (prediction error)
+
+k = number of predictor variables
+
+# Model R and R^2
+R = multiple correlation coefficient which is the correlation between the predicted scores and the observed scores. 
+
+R = $r_{\hat{y}y}$
+
+$R^2$ is the percentage of variance in Y explained by the model
+
+```{r}
+setwd("C:\\Users\\akane\\Desktop\\Science\\Teaching\\R-Course-UCC")
+data<-read.csv("Salaries.csv",header=T,sep=",")
+head(data)
+# recode the nominal variable of sex into a new dummy variable where female gets a 1 and male gets a 0
+data$sex <- factor(with(data,ifelse((sex == "Female"),1,0)))
+head(data)
+# we can invent a new variable for the number of publications 
+set.seed(100)
+pubs <- round(rnorm(data$yrs.since.phd, mean= 30,sd=8))
+head(pubs)
+data["pubs"] <- pubs
+summary(data)
+m1<-glm(data$salary~data$pubs+data$yrs.since.phd+data$sex)
+summary(m1)
+```
+
+$\hat{y} = 88632.5 - 150.4(pubs) + 959.4(PhD) - 8536.2(sex)$
+
+But, what do these values actually mean? 
+
+88632.5 is the intercept of the model and is the predicted salary for a male professor who has no publications and has just graduated from his PhD (predicted score when all X=0). 
+
+959.4 is the predicted change in salary associated with an increase in one year since your PhD, for professors who have an average number of publications and averaged across men and women. In a multiple regression you have to take into account the other variables. It's not simply the predicted change in salary for a unit change in time since PhD. 
+
+Who makes more money, men or women? This can't be answered based on the output. -8536.2 is the predicted difference between men and women in the amount of money made for an average number of years since PhD and an average number of years service. The other values on the other predictors hide this effect. 
+
+According to this model, is the gender difference statistically significant? No because p > 0.05.
+
+
+#Matrix Algebra for Parameter Estimation in Multiple Regression
+A matrix is a rectangular table of known or unknown numbers. The size, or order of a matrix is given by identifying the number of rows and columns (Really Cool). The order of the following matrix is 4 x 2. 
+
+```{r}
+M<-matrix(c(1,5,3,4,2,1,4,2),nrow=4,byrow = FALSE);M
+dim(M)
+```
+
+The transpose $M^T$ of a matrix (M) is formed by rewriting its rows as columns. 
+
+```{r}
+M<-matrix(c(1,5,3,4,2,1,4,2),nrow=4,byrow = FALSE);M
+Mt<-t(M);Mt
+```
+
+Two matrices may be added or subtracted only if they are of the same order. 
+
+```{r}
+M<-matrix(c(1,5,3,4,2,1,4,2),nrow=4,byrow = FALSE);M
+N<-matrix(c(2,4,1,3,3,5,2,1),nrow=4,byrow = FALSE);N
+M+N
+M-N
+```
+
+Two matrices may be multiplied when the number of columns in the first matrix is equal to the number of rows in the second matrix. If so, then we say they are conformable for matrix multiplication.
+
+In our case we have to take the transpose of matrix M to make it conformable. 
+
+$R=M^T*N$
+
+$R_{ij}=\Sigma(M_{ik}^T * N_{kj})$
+
+The result is a matrix that has the number of rows of the first matrix and the number of columns in the second matrix.
+
+```{r}
+M<-matrix(c(1,5,3,4,2,1,4,2),nrow=4,byrow = FALSE);M
+N<-matrix(c(2,4,1,3,3,5,2,1),nrow=4,byrow = FALSE);N
+Mt<-t(M)
+Mt%*%N # 2 x 2 matrix results
+```
+
+###Example of matrix algebra
+Let's move from a raw dataframe to a correlation matrix. Remember for regular algebra you move from deviation scores to mean squares. 
+
+```{r}
+#create vectors -- these will be our columns
+a <- c(3,3,2,4,4,5,2,3,5,3)
+b <- c(2,2,4,3,4,4,5,3,3,5)
+c <- c(3,3,4,4,3,3,4,2,4,4)
+
+#create matrix from vectors
+M <- cbind(a,b,c)
+k <- ncol(M) #number of variables
+n <- nrow(M) #number of subjects
+
+#create means for each column
+M_mean <- matrix(data=1, nrow=n) %*% cbind(mean(a),mean(b),mean(c)); M_mean
+
+#creates a difference matrix which gives deviation scores
+D <- M - M_mean; D
+
+#creates the covariance matrix, the sum of squares are in the diagonal and the sum of cross products are in the off diagonals. We're taking the deviation scores, multiplying it by themselves (i.e. squaring them) and then summing them. To get the sum of cross products you do something similar but just multiply x and y instead of x and x.  
+C <-  t(D) %*% D; C
+
+#pulls out the standard deviations from the covariance matrix, remember an exponent of 1/2 is the same as taking the square root
+S <- diag(diag(C)^(-1/2)); S
+
+#constructs the correlation matrix. In the diagonals are ones because each variable correlates with itself. In the off diagonals we get the correlations between the 3 variables. 
+round (S %*% C %*% S, 2)
+
+# check with normal correlation code
+cor(a,a)
+cor(a,b)
+cor(a,c)
+cor(b,c)
+```
+
+#Estimation of coefficients for multiple regression
+The values of the coefficients (B) are estimated such that the model yields optimal predictions. As with simple regression we try to minimise the residuals. 
+
+The sum of the squared (SS) residuals is the value that is minimised where SS.Residual = $\Sigma(\hat{Y}-Y)^2$
+
+How do we do that when we have multiple predictors in the model? We have to solve for multiple regression coefficients. 
+
+Standardised (where the regression constant is 0 i.e. the predicted score on Y when X = 0 is itself 0, this means we can drop it from the equation) and in matrix form, the regression equation is:
+
+$\hat{Y}=B(X)$ where $\hat{Y}$ is a [Nx1] vector, with N = to the number of cases. B is a [kx1] vector, with k = to the number of predictors and X is a [Nxk] matrix.
+
+For $\hat{Y}=B(X)$ we have to solve for B. To do this we replace $\hat{Y}$ with Y and conform for matrix muliplication to get Y=X(B).
+Now, let's make X square and symmetric. To do this, pre-multiply both sides of the equation by the transpose of $X$, $X^T$. If we do that Y=X(B) becomes $X^T(Y)=X^T(XB)$. Now, to solve for B, eliminate $X^TX$. To do this, pre-multiply by the inverse $(X^TX)^-1$. So, $X^TY =X^T(XB)$ becomes $(X^TX)^-1(X^TY)-(X^TX)^-1(X^TXB)$. Note that $(X^TX)^-1(X^TX)=l$ which is the identity matrix. And that lB = B. Therefore, $(X^TX)^-1(X^TY)=B$
+
+The solution is therefore, $B=(X^TX)^-1(X^TY)$. We know the X and Y values, these are our variables. Let's use this formula to calculate B's from the raw data matrix used in the previous segment.
+
+```{r}
+#create vectors -- these will be our columns
+y <- c(3,3,2,4,4,5,2,3,5,3)
+x1 <- c(2,2,4,3,4,4,5,3,3,5)
+x2 <- c(3,3,4,4,3,3,4,2,4,4)
+
+#create matrix from vectors
+M <- cbind(y,x1,x2)
+k <- ncol(M) #number of variables
+n <- nrow(M) #number of subjects
+
+#create means for each column
+M_mean <- matrix(data=1, nrow=n) %*% cbind(mean(y),mean(x1),mean(x2)); M_mean
+
+#creates a difference matrix which gives deviation scores
+D <- M - M_mean; D
+
+#creates the covariance matrix, the sum of squares are in the diagonal and the sum of cross products are in the off diagonals.  
+C <-  t(D) %*% D; C
+
+```
+
+Since we used deviation scores we can substitute $S_{xx}$ for $X^TX$ and substitute $S_{xy}$ for $X^TY$. Therefore, $B=(S_{xx})^-1S_{xy}$
+
+```{r}
+E<-matrix(c(10.5,3,3,4.4),nrow=2,ncol=2);E
+F<-matrix(c(-2,-.6),nrow=2,ncol=1);F
+solve(E)%*%F
+```
+
+
+An alternative formulation can be done as follows
+
+```{r}
+y <- c(3,3,2,4,4,5,2,3,5,3)
+x1 <- c(2,2,4,3,4,4,5,3,3,5)
+x2 <- c(3,3,4,4,3,3,4,2,4,4)
+Y <- as.matrix(y);
+X <- as.matrix(cbind(1,x1,x2));
+beta = solve(t(X) %*% X) %*% (t(X) %*% Y) ; beta
+model <- lm(y~1+x1+x2) ; model$coefficients
 ```
 
 #The General Linear Model 
@@ -1812,9 +2197,333 @@ plot2+theme_bw() +
 ```
 In sum, all that is implied by "interaction" (or "moderator") is that the way one predictor relates to the outcome depends on the level of the other predictor.
 
+#Moderation Centering Predictors
+How to centre? You simply create deviation scores $X_c=X-M$
+After centering the mean of the predictors will be 0. 
 
+##Conceptual reason for centering
+There are conceptual reasons for doing so. To take one example:
+
+Y=child's verbal ability
+
+X=mother's vocabulary
+
+Z=child's age
+
+In this case the intercept $B_0$ is the predicted score on Y when all predictors (X,Z) are zero
+
+If X = 0 or z = 0 is meaningless, or impossible (as would be the case here for a mother's vocab or child's age being 0) then $B_0$ will be difficult to interpret
+
+In contrast, if X = 0 and Z = 0 are the average then $B_0$ is easy to interpret. We'll then have our intercept to mean the predicted score on Y for a child with an average age who has a mother with an average vocab. 
+
+The regression coefficient $B_1$ is the slope for X assuming an average score on Z. 
+
+No moderation effect implies that $B_1$ is consistent across the entire distribution of Z. 
+
+In contrast, a moderation effect implies that $B_1$ is NOT consistent across the entire distributin of Z. 
+
+Where in the distribution of Z is $B_1$ most representative of the relationship between X and Y? 
+
+For an additive regression model if I centre my predictors, the regression constant will change but the slopes will not.
+
+For a regression model with a moderation effect, the regression constant will change as before when centering. But now, so too will the individual slopes of X and Z. However, the higher order term, the one that denotes the interaction, will NOT change. The point is that the lower order slopes change because of the interaction, so we should focus on the interaction term itself. 
+
+Centering can also give us the best estimate for the slope if we did not include the moderation effect. That's because we're getting the average effect by centering.
+
+## Statistical reason for centering
+The predictors, X and Z, can become highly correlated with the product (X*Z). This is an instance of multicolinearity: when two predictor variables in a GLM are so highly correlated that they are essentially redundant and it becomes difficult to estimate B values associated with each predictor. It's very difficult for the regression to pick out the unique variance explained by each of the predictors in Y when it comes to the computation of the matrix algebra.
+
+#Moderation Example 2
+Example as before:
+
+X = experimental manipulation of stereotype threat
+
+Y= behavioural outcome of IQ score
+
+Z=moderator of working memory capacity (WM)
+
+Now we have to centre our continuous predictor. So if X is categorical and Z is continuous we compare 2 models: 
+
+Model 1 with no moderation
+
+$Y=B_0+B_1(D1)+B_2(D2)+B_3Z.centre + e$
+
+Model 2 with moderation 
+
+$Y=B_0+B_1(D1)+B_2(D2)+B_3Z.centre +B_4(D1*Z.centre) +B_5(D2*Z.centre)+ e$
+
+In our data the WMS is now in deviation form. 
+
+The setup is that students took a working memory task and were assigned at random to one of 3 experimental conditions. The students then performed an IQ test. 
+
+Here's model 1 uncentred and centred:
+```{r}
+setwd("C:\\Users\\akane\\Desktop\\Science\\Teaching\\R-Course-UCC")
+dir()
+data<-read.table("centre.txt")
+head(data)
+model1<-lm(IQ~WM+D1+D2,data=data)
+summary(model1)
+
+model1.centred<-lm(IQ~WM.centered+D1+D2,data=data)
+summary(model1.centred)
+```
+
+Compared to before the only value that has changed is the intercept because now we have centred the data. Now the intercept is the mean of the IQ scores. 
+
+Here's model 2 uncentred and centred:
+```{r}
+model2<-lm(IQ~WM+D1+D2+(WM*D1)+(WM*D2),data=data)
+summary(model2)
+
+model2.centred<-lm(IQ~WM.centered+D1+D2+(WM.centered*D1)+(WM.centered*D2),data=data)
+summary(model2.centred)
+```
+
+Now the intercept will change as well as anything below the highest order coefficients. 
+
+We can now compared the 2 centred models to see which is the best fit. ALl of the numbers will be the same because all we did was change the scale. 
+
+```{r}
+anova(model1.centred,model2.centred)
+```
+
+#Mediation
+We'll use our previous example:
+
+X = experimental manipulation of stereotype threat
+
+Y= behavioural outcome which is the IQ score
+
+M=mediator(mechanism) which is working memory capactiy.
+
+In this case, we're asking why does stereotype threat manipulate IQ, perhaps it's working memory capacity? 
+
+A mediation analysis is typically conducted to better understand an observed effect of an IV on a DV or a correlation between X and Y. 
+
+In our example, why and how, does stereotype threat influence IQ test performance? 
+
+Mediation helps get around the problem of 'correlation does not equal causation" because it allows us to infer a mechanism. 
+
+If X and Y are correlated BECAUSE of the mediator M, then (X->M->Y):
+
+$Y=B_0+B_1M+e$ 
+
+&
+
+$M=B_0+B_1X+e$ 
+
+X should predict M and M should predict Y.
+
+If X and Y are correlated BECAUSE of the mediator M, and:
+
+$Y=B_0+B_1M+B_2X+e$
+
+What will happen to the predictive value of X?
+In other words will $B_2$ be significant? If when we add in the mediator the main effect goes away (e.g. the effect of stereotype threat on IQ) then we have evidence for a mediating effect.
+
+A mediator variable (M) accounts for some or all of the relationship between X and Y. When it's some it's a partial mediation (here the regression coefficient will drop but may still be significant), when it's all it's full mediation (here the regression coefficient will drop to 0). 
+
+We still have to remember that correlation does not imply causation. In other words, there is a BIG difference between statistical mediation and true causal mediation.
+
+## How to test for mediation
+Run 3 regression models
+
+lm(Y~X)
+
+Regression coefficient for X should be signifcant
+
+lm(M~X)
+
+Regression coefficient for X should be signifcant
+
+lm(Y~X+M)
+
+Regression coefficient for M should be signifcant. Here's where we look to see what the effect is on the regression coefficient for X.
+
+To try this on our example it will look like this:
+
+Students are randomly assigned to 1 of the 2 experimental conditions: threat or control.
+
+They complete a working memory task and then complete an IQ test. The difference to before is that they complete the working memory test after the threat condition. It is assumed that the threat will affect both IQ and working memory.
+
+```{r}
+library(multilevel)
+setwd("C:\\Users\\akane\\Desktop\\Science\\Teaching\\R-Course-UCC")
+MED<-read.table("mediation.txt")
+head(MED)
+model.ALL <- sobel(MED$condition, MED$WM, MED$IQ) 
+model.ALL
+```
+
+The predicted score on IQ in control conditions is 97.32. The slope for the Y~X is -11 because control is 0 and threat is 1. Therefore as we move from control to threat we get an -11 drop in IQ.
+
+For working memory as a funcion of threat threat there is a similar drop becuase the slope is -11.42.
+
+In the model where we have Y~X+M the effect of threat on IQ is no longer significant (0.3012). That is because we added working memory into the model.
+
+The interpreation of this analysis is that there is full mediation. The direct effect is no longer significant after adding the mediator into the regression equation. The Sobel test is also significant. Is the effect of the path from X through M to Y where the null is that this is 0. Similiar to other tests, it's a ratio.
+
+#Mediation through Structural Equation Modelling path analysis
+Mediation analyses are typically illustrated using "path models"
+
+Path models are a form of structural equation modeling that have their own sort of notation.
+
+Rectangles: observed variables (X,Y,M)
+
+Circles: unobserved variables (e)
+
+Triangles: constants
+
+Arrows: associations 
+
+#T-tests
+Let's assume a simple experimental design
+An independent variable with either vaccine or placebo. And a dependent variable which is the rate of polio.
+
+This will give us two means that can be compared using a t-test. NHST can be conducted, yielding a p-value. Effect size can also be calculated. And confidence intervals around the sample means can also be reported. 
+
+$z=(observed-expected)/SE$
+
+$t=(observed-expected)/SE$
+
+Where SE is standard error
+
+##When to use z and t? 
+A z-test is used when comparing a sample mean to a population mean when the standard deviation of the population is known. 
+
+A single sample t-test is used when comparing a sample mean to a population mean when the standard deviation of the population is unknown. 
+A dependent t-test is used when evaluating the difference between two related samples (e.g. when the same people are measured twice).
+
+An independent t-test is used when evaluating the difference between two independent samples.
+
+| test              | observed                            | expected                                | SE                                 |
+|-------------------|-------------------------------------|-----------------------------------------|------------------------------------|
+| z                 | sample mean                         | population mean                         | SE of the mean                     |
+| t (single sample) | sample mean                         | population mean                         | SE of the mean                     |
+| t (dependent)     | sample mean of difference scores    | population mean of difference scores    | SE of the difference               |
+| t (independent)   | difference between two sample means | difference between two population means | SE of the difference between means |
+
+For dependent we get difference scores at the level of the individual and for the independent we get difference scores at the level of the group.
+
+##p-values for z and t
+Exact p-value depends on:
+
+Directional or non-directional test
+
+Degrees of freedom (df): different t-distributions for different sample sizes
+
+##degrees of freedom for z and t tests
+| test              | df            |
+|-------------------|---------------|
+| z                 | NA            |
+| t (single sample) | N-1           |
+| t (dependent)     | N-1           |
+| t (independent)   | (N1-1)+(N2-1) |
+
+#Dependent t-tests
+Also known as paried samples t-test. This is appropriate when the same subjects are being compared e.g. pre/post design. Or when two samples are matched a the level of individual subjects, allowing for a difference score to be calculated.
+
+A thorough analysis will include a t-value, a p-value, Cohen's d (effect size which is M/SD) and a confidence interval (interval estimate)
+
+The t-value: 
+t= (observed - expected)/SE
+t=(M-0)/SE=M/SE
+
+Calculate a difference score for each individual and then average them. The expected value under NHST is 0. So it comes down to what did you observe relative to what you would expect due to chance.
+
+The effect size here, Cohen's d, is calculated as the mean of the difference scores divided by the standard deviation of the difference scores. We divide by SD instead of SE because SE is biased by N (recall that SE=SD/SQRT(N)). A Cohen's d of 1 means that you want up by a standard deviation.
+
+Confidence interval:
+
+upper bound = M+t(SE); lower bound = M-t(SE)
+
+t-value depends on the level of confidence and t-distribution.
+
+Let's use the example of the wine ratings to see if there was a difference in ratings for white vs red. We'll use the Australian data because it was the only country that provided a normal distribution for both red and white which is an assumption of the t-test.
+```{r}
+library(lsr)
+x<-rnorm(100,80,1)
+y<-rnorm(100,82,1)
+t.test(x,y, paired =T)
+cohensD(x,y,method="paired")
+```
+
+Negative value for t is because of the order. It's arbitrary to the order we chose our x and y.
+
+The 95% confidence intervals are around the mean difference. What's important about the interval estimate is that it does not cover 0 so it should be signifcant. 
+
+# Independent t-tests
+Compares two independent samples e.g. males and females, control and experimental etc. 
+
+Let's use the working memory training example with more detail. Here four independent groups trained for different amounts of time (8,12,17 or 19 days)
+
+t-value
+t=(Observed - Expected)/SE
+
+t=(M1-M2)/SE
+
+SE=(SE1+SE2)/2
+
+Cohen's d 
+
+$d=(M1-M2)/SD_pooled$
+
+$SD_pooled = (SD1+SD2)/2$
+
+We need to pool the SDs of the two groups to get their average variance in the case of independent t. 
+
+#Extra step for indepenent t
+Homogeneity of variance is assumed. 
+The pooled SD is appropriate only if the variances in the two groups are equivalent.
+
+If not, then the homogeneity of variance assumption is violated. Simulations indicates this results in an increased probability of tpe 1 error.
+
+We can detect a violation of this assumption using Levene's test. If this is significant then the homogeneity of variance is violated.
+
+If it is violated we can adjust the df and p-value using Welch's procedure, which can protect against type 1 error, or e can use a non-parametric test.
+
+```{r}
+# example with equal variance
+library(car)
+sample1<-rnorm(100,50,1)
+sample2<-rnorm(100,50,1)
+y <- c(sample1, sample2)
+group <- as.factor(c(rep(1, length(sample1)), rep(2, length(sample2))))
+leveneTest(y,group)
+
+# independent t test
+t.test(y~group,var.equal = T)
+cohensD(y~group,method = "pooled")
+
+#example with unequal variance
+sample1<-rnorm(100,50,1)
+sample3<-rnorm(100,50,4)
+y1 <- c(sample1, sample3)
+group <- as.factor(c(rep(1, length(sample1)), rep(2, length(sample3))))
+leveneTest(y1,group)
+```
+
+Conducting multiple t-tests is tedious and increases the probability of Type 1 error. Instead, when there are more than two group means to compare, conduct analysis of variance (ANOVA).
+
+#Analysis of Variance (ANOVA)
+Appropriate when the predictos (IVs) are all categorical and the outcome (DV) is continuous. Most common application is to analyse data from randomised controlled experiments.
+
+More specifically, randomised controlled experiments that generate more than two group means. If only two group means use a dependent or indenpent t-test.
+
+If you have more than two group means and they're all independent then you use a between groups ANOVA. If you have more than two group means but they're dependent then you use a repeated measures ANOVA.
+
+The null hypothesis for an ANOVA is that all groups are equal.
+
+The ANOVA will tell us if there is an overall effect somewhere. That's what the F-test does. 
+
+ANOVA typically involves NHST. The test statistic is the F-test (F-ratio). F = (variance between groups)/(variance within groups)
+
+The variance within groups is unsystematic and what we would expect due to chance. 
 
 #F-tests
+Like the t-test and family of t-distributions the F-test has a family of F-distributions. The distribution to assume depends on the number of subjects per group and the number of groups.
+
 F tests are most commonly used for two purposes:
 
 1. in ANOVA, for testing equality of means (and various similar analyses); and
@@ -1907,6 +2616,603 @@ That is, for testing whether the ratio of population variances differs from 1, y
 
 * (Leaving aside the issue of the high sensitivity to the distributional assumption of this test (there are better alternatives) and also the issue that if you're interested in suitability of ANOVA equal-variance assumptions, your best strategy probably isn't a formal test.)
 
+F-ratio can be written in a number of ways:
+
+F = between groups variance/ within groups variance
+
+F = $MS_between$ / $MS_within$
+
+F = $MS_A$ / $MS_{S/A}$
+
+MS = mean squares = variance
+
+If we take the last line to describe F
+
+then $MS_A$ = $SS_A$ / $df_A$
+
+and $MS_{S/A}=SS_{S/A}/df_{S/A}$
+
+We compare each group mean to the grand mean to get variance across groups.
+
+$SS_A=n \Sigma(Y_j - Y_T)^2$ where
+
+$Y_j$ are the group means and
+
+$Y_T$ is the grand mean
+
+For within groups we take an individual's score and take away the group mean to get the within group sums of squares. 
+
+$SS_{S/A}= \Sigma(Y_{ij}-Y_j)^2$ where
+
+$Y_{ij}$ are individual scores and
+
+$Y_j$ are the group means
+
+$df_A=a-1$
+
+$df_{S/A}=a(n-1)$
+
+$df_TOTAL = N-1$
+
+ANOVA can also be biased by sample size so we can derive an effect size. In this case it's called eta-squared (analagous to $R^2$), and is the proportion of variance in the dependent variable exaplained by the independent variable.
+
+$\eta = SS_A/SS_Total$
+
+##Assumptions of ANOVA
+DV is continuous (interval or ratio variable)
+
+DV is normally distributed.
+
+Homogeneity of variance: within-groups variance is equivalent for all groups. To test this we can use Levene's test.
+
+As with the independent t test we pool the standard deviations across groups. If Levene's test is significant then homogeneity of variance assumption has been violated and we instead conduct pairwise comparisons using a restricted error term.
+
+```{r}
+y1<-rnorm(20,1,1)
+y2<-rnorm(20,1.5,1)
+y3<-rnorm(20,2,1)
+y4<-rnorm(20,2.5,1)
+
+y = c(y1, y2, y3, y4)
+n = rep(20, 4)
+n
+
+group = rep(1:4, n)
+
+data = data.frame(y = y, group = factor(group))
+fit = aov(y ~ group, data)
+anova(fit)
+
+TukeyHSD(fit)
+```
+
+Our F-value tell us that we have that much times between groups variance as within. It is the ratio of the two mean squares. And the mean squares come from the sum of squares divided by the degrees of freedom.
+
+The TukeyHSD is a post-hoc that does a pair-wise comparison and takes into account the fact we're doing multiple comparisons. It thereby protects from overinflating the chance of Type 1 error.
+
+#Post-hoc tests
+Post-hoc tests in general, allow for multiple pairwise comparisons without an increase in the probability of a Type 1 error.
+
+Many procedures are available, the degree to which p-values are adjusted varies according to procedure. The most liberal involves no adjustment, the most conservative involves the Bonferoni procedure.
+
+Because p = 0.05, if we do the same experiment over and over again, say 100 times to a population where there is no effect, I will get a significant value 5 times. This is what happens when we do multiple comparisons and is the reason we conduct post-hoc tests.
+
+```{r}
+# say for 6 possible pairwise comparisons
+p.adjust(0.05,method = "bonferroni",6)
+```
+
+#Repeated Measures ANOVA
+Previously we dealt with between samples ANOVA which is analagous to independent t tests. Repeated measures ANOVA is analagous to dependent t tests. 
+
+##Pros and cons of repeated measures ANOVA
+###Pros
+Less cost (fewer subjects required)
+
+More statistical power. Subjects may reveal consistent individual differences across experiment i.e. the variance across subjects may be systematic. If so, it will not contribute to the error term. 
+
+In a between groups design we have two areas where variance can occur 1. the systematic / between groups variance or 2. unsystematic/ within groups variance. 
+
+In a repeated measures design we also have the subject variance. Thus, unsystematic/ within groups variance is reduced as a function of stable subject variance. 
+
+Error in a repeated measures design is the inconsistency of subjects from one condition to another. 
+
+$F_A=MS_A/MS_{A*S}$
+
+where A is the variance attributable to your independent variable. 
+
+How much error did we create due to our manipulation is covered by the numerator term $MS_A$. 
+
+The error term in the denominator of the F ratio is mean squares for the interaction between your independent variable and subject variability. 
+
+##Mean Squares and F Ratio
+$MS_A=SS_A/df_A$
+
+$MS_{AxS}=SS_{AxS}/df_{AxS}$
+
+$F=MS_A/MS_{AxS}$
+
+###Cons
+####Counterbalancing
+
+Consider a simple design with just two conditions, A1 and A2 and we're worried about the order to apply these conditions. 
+
+One approach is a Blocked Design.
+Subjects are randomly assigned to one of two "order" conditions e.g. half do the order A1,A2 and the other half do the order A2,A1. 
+
+Another approach is a randomised design such that the conditions are presented randomly in a mixed fashion e.g. A2,A1,A2,A2,A2,A1,A2...
+
+Now suppose a = 3 i.e. 3 levels to the independent variable and a blocked design. There are 6 possible orders (3!). This could spiral out of control with ever more levels. 
+
+A1,A2,A3
+
+A1,A3,A2
+
+A2,A1,A3
+
+A2,A3,A1
+
+A3,A1,A2
+
+A3,A2,A1
+
+To get around this we implement a "Latin Squares" design. Latin Squares aren't completely counterbalanced but every condition appears at every position at least once. For example, if a=3, then,
+
+A1,A2,A3
+
+A2,A3,A1
+
+A3,A1,A2
+
+####Missing Data
+More problematic here because the subjects are compared across conditions. Two issues to consider, the relative amount of missing data and the pattern of missing data. 
+
+We can test if the missing data has a pattern. For any variable of interest (X) create a new variable (XM). Set XM=0 if X is missing and XM=1 if X is not missing. 
+
+Conduct a t-test with XM as the independent variable. If this is significant then the pattern of missing data may be lawful.
+
+Say we measured age, and we want to measure if the missing data is lawful as a function of age. Young people tend not to answer the question 'what is your ethnicity' and this approach could be used to tease out such a pattern.
+
+Remedies to missing data
+
+Drop all the cases without perfect profile. Though this is very drastic, use only if you can afford it. 
+
+Alternatively, keep all cases and estimate the values of the missindg data points. There are several options for how to estimate values e.g. multiple regression.
+
+##Sphericity assumption
+Homogeneity of variance 
+
+AND
+
+Homogeneity of covariance
+
+If we have an independent variable with 3 levels, the standardised pairwise covariance (correlation) between each should be approximately the same. 
+
+You can test for this using Mauchly's test. If it's significant, then report an adjusted p-value using Greenhouse-Geisser or Huyn-Feldt.
+
+#Repeated Measures ANOVA Example
+```{r}
+#Compare prices in local shops. List of ten representative grocery items and then went to four local stores and recorded the price of each item in each shop. The advantage of the repeated measures analysis is that it allows us to parcel out variability due to subjects. In this case the groceries. 
+
+groceries = read.table(header=T, row.names=1, text="
+ subject            storeA  storeB  storeC  storeD     ####
+ lettuce              1.17    1.78    1.29    1.29        #
+ potatoes             1.77    1.98    1.99    1.99        #
+ milk                 1.49    1.69    1.79    1.59        #
+ eggs                 0.65    0.99    0.69    1.09        #
+ bread                1.58    1.70    1.89    1.89        ### you can copy and paste this
+ cereal               3.13    3.15    2.99    3.09        #   part from the table above
+ ground.beef          2.09    1.88    2.09    2.49        #
+ tomato.soup          0.62    0.65    0.65    0.69        #
+ laundry.detergent    5.89    5.99    5.99    6.99        #
+ aspirin              4.46    4.84    4.99    5.15     ####
+ ")
+
+gr2 = stack(groceries)                              # tidy up data
+gr2$subject = rep(rownames(groceries), 4)           # create the "subject" variable
+gr2$subject = factor(gr2$subject)                   # define the subject as factors
+colnames(gr2) = c("price", "store", "subject")      # rename the columns
+gr2                                                 # take a look
+
+
+aov.out = aov(price ~ store + Error(subject/store), data=gr2)
+summary(aov.out)
+
+```
+
+The first part of the summary is the subject variance. 
+
+The second part is the effect of our condition. The df for our condition is 3 because we have 4 shops. 
+
+We can then carry out our post hoc tests. In this case it's the Holm method.
+
+```{r}
+with(gr2, pairwise.t.test(price,store, paired = T))
+```
+
+Here is the Bonferroni method: 
+
+```{r}
+with(gr2, pairwise.t.test(price,store, paired = T,p.adjust.method = "bonferroni"))
+```
+
+#Chi Square Tests
+How to deal with situations where we have a categorical outcome variable e.g. a nominal variable like diagnosis (positive or negative), verdict(guily or innocent) etc. as well as categorical predictors.
+
+The Chi-square goodness of fit statistic determines how well a distribution of proportions "fits" an expected distribution. 
+
+In election polls, is there a statistically significant difference in voter preference among candidates. 
+
+The Chi-square test of independence determines whether there is a relationship between two categorical variables. 
+
+In election polls, is there a relationship between thegender of the voter and the candidate they prefer i.e. is there a contingency.
+
+##Chi-square goodness of fit
+City Mayoral election
+
+Assume a small poll was conducted (N=60) where people were asked do you intend to vote for CQ, JL or Other?
+
+Let's assume our results were 23 for CQ, 12 for JL and 25 for Other. 
+
+Our Chi-square goodness of fit tests the null hypothesis that there are equal proportions across those categories. 
+
+The alternative hypothesis is that there are unequal proportions.
+
+$\chi^2=\sum\frac{(O - E)^2}{E}$
+
+O = observed
+
+E = expected 
+
+df = # of categories - 1
+
+p-value depends on $\chi^2$ and df
+
+Similar to t distributions there are a famil of chi-square distributions whose shape is determined by df. 
+
+To estimate effect size we use Cramer's V (or Phi)
+
+$\phi_c=sqrt(\frac{\chi^2}{N(k-1)})$
+
+N = sample size
+
+k = # of categories
+
+| CQ     | JL     | Other  |
+|--------|--------|--------|
+| 20 (E) | 20 (E) | 20 (E) |
+| 23(O)  | 12(O)  | 25(O)  |
+
+
+| Subject | O  | E  | (O-E) | (O-E)^2 | (O-E)^2 / E |
+|---------|----|----|-------|---------|-------------|
+| CQ      | 23 | 20 | 3     | 9       | 0.45        |
+| JL      | 12 | 20 | -8    | 64      | 3.2         |
+| Other   | 25 | 20 | 5     | 25      | 1.25        |
+| Total   | 60 | 60 | 0     | 98      | 4.9         |
+
+$\chi^2$ = 4.90, df=2, p = 0.09
+
+Therefore, retain the null hypothesis and conclude that the slight preferences observed here are not statistically significant.
+
+For the effect size,
+
+$\phi_c=sqrt(\frac{\chi^2}{N(k-1)})$
+
+$\phi_c=sqrt(\frac{4.90}{60(3-1)})$ = 0.20
+
+This can be interprted like a correlation coefficient or a standardised regression coefficient. 
+
+##Chi square test of independence
+The Chi-square test of independence determines whether there is a relationship between two categorical variables. 
+
+In election polls, is there a relationship between thegender of the voter and the candidate they prefer i.e. is there a contingency.
+
+Again, use the example of a mayoral election in a city. 
+
+Assume a small poll was conducted of 200 people. 
+More males than females in the poll (n=140, n=60)
+
+Do you intend to vote for CQ, JL or other?
+
+Our null is that there is no relationship between gender and voter preference. 
+
+Our alternative is that there is a relationship between gender and voter preference. 
+
+$\chi^2=\sum\frac{(O - E)^2}{E}$
+
+the same as before
+
+df is different and is now (# of rows - 1) * (# of columns -1)
+
+p-value depends on $\chi^2$ and df
+
+To estimate effect size we again use Cramer's V (or Phi)
+
+$\phi_c=sqrt(\frac{\chi^2}{N(k-1)})$
+
+N = sample size
+
+k = # of categories or # of rows (whichever is less)
+
+We have to compute the expected frequencies. The proportion of male and female voters for each candidates should be the same as the overall voter preference rates.
+
+To compute the expected frequencies
+
+E=(R/N)*C
+
+E= Expected frequency
+
+R= #of entries in the cell's row
+
+N= total # of entries
+
+C= # of entries in the cell's column
+
+Here is the table for the observed frequencies
+
+|             | CQ  | JL | Other | Row Sums |
+|-------------|-----|----|-------|----------|
+| Female      | 40  | 10 | 10    | 60       |
+| Male        | 90  | 40 | 10    | 140      |
+| Column Sums | 150 | 50 | 20    | 200      |
+
+Here is the table for the expected frequencies
+
+|  | CQ | JL | Other | Row Sums |
+|-------------|--------------------|-------------------|-------------------|----------|
+| Female | (60/200) x 130 = 39 | (60/200) x 50 = 15 | (60/200) x 20 = 6 | 60 |
+| Male | (140/200) x 130 = 91 | (140/200) x 50 = 35 | (140/200) x 20 = 14 | 140 |
+| Column Sums | 130 | 50 | 20 | 200 |
+
+Calculate the Chi square score
+
+| Subject | O | E | (O-E) | (O-E)^2 | (O-E)^2 / E |
+|---------|-----|-----|-------|---------|-------------|
+| F/CQ | 40 | 39 | 1 | 1 | 0.03 |
+| F/JL | 10 | 15 | -5 | 25 | 1.67 |
+| F/Other | 10 | 6 | 4 | 16 | 2.67 |
+| M/CQ | 90 | 91 | 1 | 1 | 0.01 |
+| M/JL | 40 | 35 | 5 | 25 | 0.71 |
+| M/Other | 10 | 14 | -4 | 16 | 1.14 |
+| Sum | 200 | 200 | 0 | 84 | 6.23 |
+
+$\chi^2$ = 6.23, df = 2, p=0.04
+
+Reject the null and conclude that there is a significant relationship between gender of the voter and the candidate.
+
+For th effect size,
+
+$\phi_c=sqrt(\frac{\chi^2}{N(k-1)})$
+
+$\phi_c=sqrt(\frac{6.23}{200(2-1)})$ = 0.18
+
+```{r}
+Observed <- matrix(c(40,10,10,90,40,10),nrow = 2,ncol = 3, byrow = T)
+chisq.test(Observed)
+```
+
+###Assumptions
+Adequate expected cell counts.
+A common rule is 5 or more in al cells of a 2x2 table, and 5 or more in 80% of cells in larger tables, and no cells with zero.
+
+When this assumption is not met, Fisher's exact test, a non-parametric test, is recommended. 
+
+Independence
+The observations are assumed to be independent of each other. 
+
+This means chi-square cannot be used to test correlated data (like matched pairs of panel data)
+
+In such cases, McNemar's test of dependent proportions is recommended. 
+
+#Binary Logistic Regression
+Outcome variable is a binary categorical but predictors are categorical or continuous. 
+
+Aside from that it is the same logic as multiple regression.
+
+When the outcome has 2 levels it's a binary logistic regression.
+
+When the outcome has > 2 levels it's a multinomial regression.
+
+##Formula
+$ln(\hat{Y}/(1-\hat{Y})) = B_0 +\Sigma(B_kX_k)$
+
+$\hat{Y}$=predicted value on the outcome variable Y
+
+$B_0$= predicted value on Y when all X = 0
+
+$X_k$= predictor variables
+
+$B_k$= unstandardised regression coefficients
+
+$(Y-\hat{Y})$= residual (prediction error)
+
+k = the number of predictor variables
+
+Why $ln(\hat{Y}/(1-\hat{Y}))$? 
+
+The predicted score must fall between 0 and 1. The logistic function allows us to do this.
+
+Why not calculate the probability of the outcome = $B_0 + \Sigma(B_kX_k)$???
+
+Because there is no guarantee that the linear combination of predictors will produce a score between 0 and 1
+
+A transformation is therefore applied. 
+
+Odds ratio is the probability of the outcome over 1 minus the probability of the outcome.
+
+Odds = P(outcome)/(1-P(outcome))
+
+For example, what are the odds a flipped coin will land heads? Odds = 0.5/0.5 = 1
+
+The take the natural log of the odds, which is called the log-odds or logit
+
+Logit = ln(P(outcome))/(1-P(outcome))
+Logit =  $ln(\hat{Y}/(1-\hat{Y}))$
+
+P(outcome) = odds/(1+odds)
+
+Odds = P(outcome)/P(~outcome)
+
+e.g. if P=0.5 then Odds=1 and Logit=0.
+
+##Example 
+Outcome variable = faculty promotion to tenure
+
+Predictor variable = publications (pubs)
+
+Logit(promotion)=$B_0+B_1(pubs)$
+
+Logit(promotion)=$0+0.39(pubs)$
+
+For every one unit increase in pubs, the logit increases by 0.39.
+
+Logit = ln(P(outcome))/(1-P(outcome))
+
+Odds = P(outcome)/P(~outcome)
+
+Logit = 0.39 translates to an odds ratio of 1.48. This means that the odds of promotion are multiplied by 1.48 for each increment in publications.
+
+Thus, if the odds or promotion with 16 publications is 1.27 then the odds of promotion with 17 publications is 1.27/1.48 = 1.88
+
+This can also be presented in terms of probability. 
+
+Pubs = 17 mean P(promotion) = 0.65, because P(promotion) = Odds/(1+Odds) = 1.88/2.88 = 0.65
+
+We can have a few hypothesis tests with binary logistic regression.
+
+Is an individual predictor variable significant?
+
+Is the overall model significant?
+
+Is Model A significantly better than Model B?
+
+To test each predictor variable, we will look at the regression coefficient, the odds ratio and the Wald test which tests the model Vs the model without the predictor. 
+
+To test the overall mode, compare the chi-square for the model to the chi-square of a model with no predictors (the null model) and/or compare models.
+
+Also, does the model classify cases correctly?
+
+```{r, echo=FALSE}
+#First, we'll create a fake dataset of 20 individuals of different body sizes:
+bodysize=rnorm(20,30,2) # generates 20 values, with mean of 30 & s.d.=2
+bodysize=sort(bodysize) # sorts these values in ascending order. 
+survive=c(0,0,0,0,0,1,0,1,0,0,1,1,0,1,1,1,0,1,1,1) # assign 'survival' to these 20 individuals non-randomly... most mortality occurs at smaller body size
+dat=as.data.frame(cbind(bodysize,survive)) # saves dataframe with two columns: body size & survival
+dat # just shows you what your dataset looks like. It will look something like this:
+
+windows(title="bodysize vs. survival") # creates a quartz window with title
+
+plot(bodysize,survive,xlab="Body size",ylab="Probability of survival") # plot with body size on x-axis and survival (0 or 1) on y-axis
+g=glm(survive~bodysize,family=binomial,dat) # run a logistic regression model (in this case, generalized linear model with logit link). see ?glm
+
+curve(predict(g,data.frame(bodysize=x),type="resp"),add=TRUE) # draws a curve based on prediction from logistic regression model
+
+points(bodysize,fitted(g),pch=20) # optional: you could skip this draws an invisible set of points of body size survival based on a 'fit' to glm model. pch= changes type of dots.
+```
+
+#Binary Logistic Regression Example
+Example is based on mock jury research (Diamond & Casper 1992)
+
+People (mock jurors) watched a video of the sentencing of a murder trial in which the defendant had already been found guilty.
+
+The issue for the jurors to decide was whether the defendant deserved the death penalty. 
+
+Assume the data were collected "pre-deliberation" which means that each juror was asked to provide his or her vote on the death penalty verdict before the jurors met as a group to decide the overall jury verdict.
+
+Outcome variable (Y)
+
+Verdict is a 1 for voted in favour of the death penalty and is a 0 for voted against the death penalty
+
+Predictors (Xs) which are attitudes the jurors had themselves.
+
+danger (dangerousness) individual's beliefs as to the future dangerousness of the defendant
+
+rehab (rehabilitation) individual's beliefs as to the importance of rehabilitation as a goal of criminal sentencing
+
+punish (punishment) individual's beliefs as to the importance of punishment as a goal of criminal sentencing.
+
+gendet (general deterrence) individual's beliefs as to the importance of general deterrence as a goal of criminal sentencing.
+
+specdet (specific deterrence) individual's beliefs as to the importance of specific deterrence as a goal of criminal sentencing.
+
+incap (incapacitation) individual's beliefs as to the importance of incapacitation as a goal of criminal sentencing.
+
+all measured on a scale of 0-10
+
+The General Linear Model will not guarantee a predicted outcome score between 0 and 1. 
+
+The Logit transformation is a feature of an even more "general" mathematical framework in regression than the general linear model. 
+
+This is known as the Generalised Linear Model and allows for non-linear relationships between predictors and the outcome variable. 
+
+```{r, echo=FALSE}
+library(QuantPsyc)
+#First, we'll create a fake dataset of 20 individuals of different body sizes:
+bodysize=rnorm(20,30,2) # generates 20 values, with mean of 30 & s.d.=2
+bodysize=sort(bodysize) # sorts these values in ascending order. 
+survive=c(0,0,0,0,0,1,0,1,0,0,1,1,0,1,1,1,0,1,1,1) # assign 'survival' to these 20 individuals non-randomly... most mortality occurs at smaller body size
+dat=as.data.frame(cbind(bodysize,survive)) # saves dataframe with two columns: body size & survival
+dat # just shows you what your dataset looks like. It will look something like this:
+
+g=glm(survive~bodysize,family=binomial,dat) # run a logistic regression model (in this case, generalized linear model with logit link). see ?glm
+
+summary(g)
+
+#convert estimates into odds ratios
+exp(coef(g))
+
+# we can test the fit by looking at the chi-squre difference to compare models to see if there is a significant difference
+with(g,null.deviance-deviance)
+
+with(g,df.null-df.residual)
+#df for the difference between the two models
+with(g,pchisq(null.deviance-deviance,df.null-df.residual,lower.tail = FALSE))
+#p-value
+
+# overall the model is doing better than the null
+
+#Can also do a series of Wald Tests one of the predictors is left out.
+
+#How well does the model classify the cases
+ClassLog(g,survive)
+
+#We can see that the model is getting over 70% of the cases correct (better than 50%)
+```
+
+More than 2 categories on the outcome = multinomial logistic regression. A-1 logistic regression equations are formed where A = # of groups and one group serves as a reference group.
+
+#Assumptions
+Two primary constraints 
+
+1. The normal distribution in Y. 
+
+2. Linear relationship between predictor variables and outcomes variables. 
+
+What do we do when we can't satisfy these assumptions?
+
+For the first, i.e. a normal dist. in Y how do we test for it? 
+
+Histograms and summary stats
+
+look for extreme skew (>3) and/or kurtosis (>10) and/or outliers (e.g. cases +/- 3 SDs from the mean)
+
+Q-Q plots
+
+A plot of the sorted values from the data set against the expected values of the corresponding quantiles from the standard normal distribution.
+
+If the distribution is normal then the plotted points should approximately lie on a straight line.
+
+```{r}
+y <- rt(200, df = 5)
+qqnorm(y); qqline(y, col = 2)
+```
+
+Empirical tests, such as D'Agostino's K^2 test
+
+Neither the dependent nor independent variable needs to be normally distributed. In fact they can have all kinds of loopy distributions. The normality assumption applies to the distribution of the errors
+
+
 
 #Probability Density Functions 
 The "bell curve" shape is governed by the PDF. However, the actual "y"-value of this curve is itself more or less meaningless. The integral of the PDF $f(x)$ gives the probability that your random variable is less than some value: 
@@ -1986,3 +3292,4 @@ This confirms that we can accept the null hypothesis $H_0$ of equality of the me
 
 ##Interactions
 Interactions allow us assess the extent to which the association between one predictor and the outcome depends on a second predictor. 
+
