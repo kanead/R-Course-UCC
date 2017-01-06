@@ -1,0 +1,1922 @@
+---
+title: "Statistics Using R - UCC"
+author: "Adam Kane"
+date: "4 November 2016"
+output: html_notebook
+---
+
+# Statistics Defined
+The practice or science of collecting and analysing numerical data in large quantities, especially for the purpose of inferring something about the nature of the population from a representative sample.
+
+# Variables
+A variable is something that can take on different values e.g. height is a variable. The opposite of variables are constants e.g. the gravitational constant which has one value only. 
+
+## Types of variables 
+In statistics we can consider many types of variables but we can think of 2 broad categories, continuous and categorical. 
+
+###Categorical variables 
+For example, classifying where people live in the USA by state. In this case there will be 50 'levels' of the categorical variable.
+
+```{r}
+categoricalVariables <- c("Alaska", "Florida", "New York", "Washington", "Texas")
+class(categoricalVariables)
+```
+
+###Continuous variables 
+are variables for which their central characteristic is that they can be measured along a continuum and they have a numerical value (for example, temperature). 
+```{r}
+continuousVariables <- c(30,31,29,30,29,33,34,35) 
+class(continuousVariables)
+```
+
+# Histograms and distributions
+A histogram is a type of graph used to display a distribution. It helps us to overcome the natural tendency to rely on summary information, such as an average. Histograms can reveal information not captured by summary statistics.
+
+```{r}
+x<-rnorm(1000, mean = 0, sd = 1)
+hist(x, main = "normally distributed data")
+```
+
+```{r, echo=FALSE}
+x<-rbeta(1000,2,5)
+hist(x, main="positive/ right skewed data")
+```
+
+```{r, echo=FALSE}
+x<-rbeta(1000,5,2)
+hist(x, main="negative/ left skewed data")
+```
+You use the empirical distribution (i.e. the histogram) if you want to describe your sample, and probability density functions if you want to describe the hypothesized underlying distribution.
+
+```{r,echo=FALSE}
+y <- seq(-4,4,length.out=200)
+
+hist(x,freq=F,ylim=c(0,0.5))
+lines(density(x),col="red",lwd=2)
+lines(y,dnorm(y),col="blue",lwd=2)
+```
+
+
+#Summary Statistics
+##Central Tendency
+###The mean 
+is a measure of central tendency
+this describes the middle or centre point of a distribution
+
+\[mean = M = \frac{1}{n} \sum_n^{i =1} x\]
+
+###The median
+is the middle score (the score below which 50% of the distribution falls)
+preferred when there are extreme scores in the distribution
+
+###The mode
+is the score that occurs most often in the distribution, useful for nominal variables
+
+###How distribution can affect measures of central tendency
+Differing distribution may mean these three measures do not overlap
+Here the mean is blue, the median grey and the mode red.
+
+```{r, echo=FALSE}
+
+x <- seq(-2.5, 10, length=1000000)
+hx5 <- rnorm(x,0,1) + rexp(x,1/5) # tau=5 (rate = 1/tau)
+#
+# Compute the density.
+#
+dens <- density(hx5)
+#
+# Compute some measures of location.
+#
+n <- length(dens$y)                       #$
+dx <- mean(diff(dens$x))                  # Typical spacing in x $
+y.unit <- sum(dens$y) * dx                # Check: this should integrate to 1 $
+dx <- dx / y.unit                         # Make a minor adjustment
+x.mean <- sum(dens$y * dens$x) * dx
+y.mean <- dens$y[length(dens$x[dens$x < x.mean])] #$
+x.mode <- dens$x[i.mode <- which.max(dens$y)]
+y.mode <- dens$y[i.mode]                  #$
+y.cs <- cumsum(dens$y)                    #$
+x.med <- dens$x[i.med <- length(y.cs[2*y.cs <= y.cs[n]])] #$
+y.med <- dens$y[i.med]                                    #$
+#
+# Plot the density and the statistics.
+#
+plot(dens, xlim=c(-2.5,10), type="l", col="black", 
+     xlab="x",ylab = "y", main="different central tendencies", lwd=2)
+temp <- mapply(function(x,y,c) lines(c(x,x), c(0,y), lwd=2, col=c), 
+               c(x.mean, x.med, x.mode), 
+               c(y.mean, y.med, y.mode), 
+               c("Blue", "Gray", "Red"))
+```
+##Measures of Variability
+a measure that describes the range and diversity of scores in a distribution
+
+###standard deviation (SD) 
+the average deviation from the mean in a distribution
+
+\[SD = \sqrt\frac{[\Sigma(X-M^2)]}{N}\] is used for descriptive statistics
+
+\[SD = \sqrt\frac{[\Sigma(X-M^2)]}{n-1}\] is used for inferential statistics
+
+###variance ($SD^2$)
+
+sum of squared deviation scores = sum of squares are divided by the sample size = mean sum of squares
+
+\[SD^2 = \frac{[\Sigma(X-M^2)]}{N}\] is used for descriptive statistics
+
+\[SD^2 = \frac{[\Sigma(X-M^2)]}{n-1}\] is used for inferential statistics
+
+this is also known as the mean squares 
+
+### Why n-1 and not n
+The sample mean is not the population mean. The sample mean is "closer" to the sample data than the population mean, so the variance calculated is smaller. Using n-1 corrects for that because it will increase the value for variance. 
+
+This n-1 is related to the degrees of freedom (d.f.). This important concept
+in statistics is defined as follows:
+
+d.f. = n - k,
+
+which is the sample size, n, minus the number of parameters, k, estimated from the data. For the variance, we have estimated one parameter from the data, the sample mean, and so there are n - 1 degrees of freedom.
+
+###How variable is Wayne Rooney
+We can calculate some summary statistics for the goals he has scored for Manchester United  
+
+here are the points he scored for the seasons he played:
+
+```{r}
+goalsPerSeason<-c(29,36,35,27,30,32,28,34,27,29,33,28,14)
+```
+
+we take the sum of those values and the sample size i.e. number of seasons he played to get the mean
+
+```{r}
+sum(goalsPerSeason)
+length(goalsPerSeason) 
+```
+
+so the mean is 
+
+```{r}
+sum(goalsPerSeason)/length(goalsPerSeason)
+```
+
+then the deviation scores show how much he deviated from the mean for each season i.e. it is the difference between a raw score and the mean.
+
+```{r}
+goalsPerSeason - mean(goalsPerSeason)
+```
+
+
+```{r, echo=FALSE}
+rnorm2 <- function(n,mean,sd) { mean+sd*scale(rnorm(n)) }
+r <- goalsPerSeason
+x <- seq_along(r)  ## sets up a vector from 1 to length(r)
+par(las=1,bty="l") ## cosmetic preferences
+plot(x, r, col = "black", pch=16,xlab = "season", ylab = "goals scored") ## draws the points
+## if you don't want points at all, use 
+##    plot(x, r, type="n")  
+## to set up the axes without drawing anything inside them
+segments(x0=x, y0=29.38462, x1=x, y1=r, col="black") ## connects them to the mean line
+abline(h=29.38462)
+
+```
+
+we can't get the average for the deviation scores because they sum to zero 
+
+```{r}
+deviationScores<- goalsPerSeason - mean(goalsPerSeason)
+devsum <- sum(deviationScores)
+```
+```{r, echo=FALSE}
+devsum <- if(all.equal(0L, devsum)) 0L else devsum ;devsum
+```
+instead we square the deviation scores, sum them and divide by N to give us a score for variance. 
+
+That is to say we calculate mean squares because it is the sums of squares divided by N. 
+
+```{r}
+(goalsPerSeason - mean(goalsPerSeason))^2
+devSq <- (goalsPerSeason - mean(goalsPerSeason))^2
+devSumSq <- sum(devSq) ; devSumSq
+variance <- devSumSq/length(goalsPerSeason) ; variance
+```
+
+Squaring however does have a problem as a measure of spread and that is that the units are all squared, whereas we might prefer the spread to be in the same units as the original data (think of squared goals scored). Hence the square root allows us to return to the original units, which is the standard deviation.
+
+```{r}
+sqrt(variance)
+```
+
+Thankfully, in R we can do all this with the inbuilt functions **mean**, **sd**, and **var** for the mean, sample standard deviation and sample variance respectively. 
+
+```{r}
+mean(goalsPerSeason)
+sd(goalsPerSeason)
+var(goalsPerSeason)
+```
+
+Notice that the values are slightly different here because we are dividing by n - 1 rather than just n. 
+
+# Standardised Scales
+### Z-scores
+In statistics there is a standard scale the Z scale. Any score from any scale can be converted to Z scores 
+
+\[Z = \frac{(X-M)}{SD}\]
+
+X = raw score, the score on the original scale
+
+M = mean
+
+SD = standard deviation
+
+The mean Z-score is Z = 0
+
+Positive Z scores are above average
+
+Negative Z scores are below average
+
+For example  
+```{r}
+X = 99.6 # body temp for one person
+M = 98.6 # the mean for the group
+SD = 0.5 # the standard deviation for the group
+Z=(X-M)/SD; Z
+```
+This value of 2 means their score is 2 standard deviations above the mean
+
+### Z Distribution
+This is a standardised normal distribution.
+
+If Z = 0 then the percentile rank = 50th which represents percentage of scores that fall at or below a score in a distribution. Thus 50% of the distribution falls below the mean 
+
+```{r,echo=FALSE}
+plot(seq(-3.2,3.2,length=50),dnorm(seq(-3,3,length=50),0,1),type="l",xlab="",ylab="",ylim=c(0,0.5))
+segments(x0 = c(-3,3),y0 = c(-1,-1),x1 = c(-3,3),y1=c(1,1))
+text(x=0,y=0.45,labels = expression("99.7% of the data within 3" ~ sigma))
+arrows(x0=c(-2,2),y0=c(0.45,0.45),x1=c(-3,3),y1=c(0.45,0.45))
+segments(x0 = c(-2,2),y0 = c(-1,-1),x1 = c(-2,2),y1=c(0.4,0.4))
+text(x=0,y=0.3,labels = expression("95% of the data within 2" ~ sigma))
+arrows(x0=c(-1.5,1.5),y0=c(0.3,0.3),x1=c(-2,2),y1=c(0.3,0.3))
+segments(x0 = c(-1,1),y0 = c(-1,-1),x1 = c(-1,1),y1=c(0.25,0.25))
+text(x=0,y=0.15,labels = expression("68% of the data within 1" * sigma),cex=0.9)
+```
+Things to note about a normal distribution.
+
+50% of the data fall above the mean and 50% below. 
+
+The majority of the data fall between 2 standard deviations above and below the mean. If you are higher or lower than these values then you are an extreme point. This allows for predictions about the distribution because we know predictions aren't certain rather they are probabilistic. 
+
+We can use R functions **pnorm** and **qnorm** on our normal distribution so we can get a better handle on what it's saying. The function **pnorm** returns the area under the curve of our normal distribution from negative infinity to the Z score we specify. 
+
+The **pnorm** function also takes the argument **lower.tail**. If **lower.tail** is set equal to **FALSE** then **pnorm** returns the area under the curve from the Z score to positive infinity.
+
+```{r}
+pnorm(0)
+pnorm(2)
+pnorm(2, lower.tail = FALSE)
+```
+
+**qnorm** can be thought of as the inverse of **pnorm** and so will return Z-scores from the distribution.
+
+```{r}
+qnorm(0.5)
+qnorm(0.95)
+```
+We can also specify the values of the distribution so it's not a standard normal by supplying the mean and standard deviation to the function.
+
+```{r}
+pnorm(4,mean=4,sd=2)
+qnorm(0.5,mean = 4, sd=2)
+```
+
+Typically we don't know the standard deviation of the population, rather we calculate a standard deviation from the sample data. In this case, when it comes to making inferences about our sample statistics, we use t-distributions instead of z-distributions. 
+
+\[t = \frac{(X-M)}{SD.sample}\]
+
+The t-distribution comes from a family that are dependent on the sample size. As your sample size gets smaller your t-distribution gets a little wider which means you need a larger t-value to get out into the extremes. 
+
+```{r, echo=FALSE}
+# Display the Student's t distributions with various
+# degrees of freedom and compare to the normal distribution
+
+x <- seq(-4, 4, length=100)
+hx <- dnorm(x)
+
+degf <- c(1, 3, 8, 30)
+colors <- c("red", "blue", "darkgreen", "gold", "black")
+labels <- c("df=1", "df=3", "df=8", "df=30", "normal")
+
+plot(x, hx, type="l", lty=2, xlab="x value",
+  ylab="Density", main="Comparison of t Distributions")
+
+for (i in 1:4){
+  lines(x, dt(x,degf[i]), lwd=2, col=colors[i])
+}
+
+legend("topright", inset=.05, title="Distributions",
+  labels, lwd=2, lty=c(1, 1, 1, 1, 2), col=colors)
+```
+
+#Exercise 
+The following distribution has a mean of 5 and a standard deviation of 2. Using **pnorm** find the area under the curve from negative infinity to 4. How many standard deviations is 4 away from the mean? 
+
+```{r}
+x <- seq(2,8,length=500)
+plot(x,dnorm(x,mean=5,sd=1),type = "l",main="Normal Distribution",ylim=c(0,0.5),xlim=c(2,8),ylab="Density")
+```
+
+
+#Sampling
+We want the sample we take from a population to be random and representative. 
+
+##Sampling error 
+**sampling error is the error caused by observing a sample instead of the whole population.**
+
+This is important because we can't get everyone/everything in the popualtion. Thus there will be some fluctuation due to sampling error. 
+
+##Problem
+We don't know the population parameters 
+
+So, how do we estimate sampling error?
+
+##Estimating sampling error 
+Sampling error mainly depends on the size of the sample, relative to the size of the population. 
+
+As sample size increases, sampling error decreases. It also depends on the variance in the population (which we don't know).As variance increases, sampling error increases. 
+
+The following histogram shows how the distribution becomes more uniform as the sample size increases illustrating the effect of sample size on sampling error.
+The R function  **runif** samples from a uniform distribution. 
+
+```{r,echo=FALSE}
+#p.die <- rep(1/6,6)
+#sum(p.die)
+#die <- 1:6
+#par(mfrow=c(2,3))
+
+#for(x in seq(10,110,20)) {
+#  s <- table(sample(die, size=x, prob=p.die, replace=T))
+  #lbls = sprintf("%0.1f%%", s/sum(s)*100)
+#  barX <- barplot(s)#ylim=c(0,200))
+#  main=x
+ # text(x=barX, y=s+10)#, label=lbls)
+#}
+
+par(mfrow=c(2,3))
+for(i in 1:6){
+x <- runif(10**i)
+hist(x,prob=TRUE, col="grey",ylim=c(0,2),main = paste(10**i," Draws"))
+curve(dunif(x),add=TRUE,col="red",lwd=2)}
+
+
+```
+
+We can check out the same effect by sampling from the normal distribtion using increasing sample sizes. As we can see the distribution becomes more normal as the sample size goes up. 
+
+```{r, echo=FALSE}
+#par(mfrow=c(2,3))
+#for(x in seq(10,1000,175)) {
+#  normDist<-rnorm(x,mean=0,sd = 1)
+#  hist(normDist,main="")
+#}
+
+#Normal Sampling
+par(mfrow=c(2,3))
+for(i in 1:6){
+x <- rnorm(10**i)
+hist(x,prob=TRUE,col="grey",ylim=c(0,.6),xlim=c(-4,4),main=paste(10**i," Draws"))
+curve(dnorm(x),add=TRUE,col="red",lwd=2)}
+```
+
+###Estimating sampling error 
+Sampling error is estimated from the size of the sample and the variance in the sample. This is under the assumption that the sample is random and representative of the population. 
+
+###Standard error
+Standard error is an estimate of the average amount of sampling error e.g. for a sample mean
+
+\[SE = \frac{SD}{\sqrt{N}}\]
+
+SE = standard error
+
+SD = standard deviation of the sample 
+
+N = Size of the sample 
+
+We can see from here that as the sample size in the denominator increases then the standard error is going to decrease. 
+
+By contrast, as the standard deviation increases (which should reflect the population standard deviation) so too will the standard error. 
+
+Whereas standard deviation describes the variability of the individual observations standard error shows the variability of the estimator.
+
+Here's an example of taking a sample from a population that is not very variable. Note the low standard error. 
+```{r}
+population<-rnorm(1000,mean=0,sd=1)
+sd(population)
+sampleDraw<-sample(population,10)
+sd(sampleDraw)
+length(sampleDraw)
+sd(sampleDraw)/sqrt(length(sampleDraw))
+par(mfrow=c(1,2))
+#hist(sampleDraw)
+hist(population)
+```
+
+Here's an example of taking a sample from a population that is variable. Note the higher standard error. 
+
+```{r}
+population<-rnorm(1000,mean=0,sd=10)
+sd(population)
+sampleDraw<-sample(population,10)
+sd(sampleDraw)
+length(sampleDraw)
+sd(sampleDraw)/sqrt(length(sampleDraw))
+par(mfrow=c(1,2))
+#hist(sampleDraw)
+hist(population)
+```
+
+#Null Hypothesis Significance Testing (NHST)
+NHST is a procedure for hypothesis testing. 
+We can consider NHST as a game where step 1 is the identification of the null hypothesis and the alternative hypothesis. 
+
+###Step 1
+for a correlational study
+
+$H_0$ = null hypothesis, e.g. the correlation = 0 
+
+$H_A$ = alternative hypothesis, e.g. the correlation is > 0
+
+If the alternative hypothesis predicts the direction of the relationship between X & Y (positive Vs negative) it is termed a directional test (aka a one-tailed test)
+
+Alternatively we could be agnositc and not have any idea about the direction of the relationship. In this case it would be a non-directional test (aka a two-tailed test)
+
+###Step 2
+Assume $H_0$ is true, then calculate the probability of observing data with these characteristics, given that $H_0$ is true. This can be confusing because it's the opposite way you'd approach a study. For instance, Jonas Salk didn't predict his vaccination would have no effect.
+
+\[p=P(D|H_0)\]
+
+**The probability of the data given the null hypothesis is true.** This is the p-value. If the p-value is very low, then reject $H_0$, else retain $H_0$
+
+A threshold value for p, called the significance level of the test is typically set at 5% and denoted as $\alpha$. If the p-value is less than or equal to the chosen significance level $\alpha$, the test suggests that the observed data is inconsistent with the null hypothesis, so the null hypothesis must be rejected. 
+
+If we reject the null hypothesis we are saying that the difference between the observed sample statistic (e.g. a sample mean) and the hypothesized population parameter (e.g. a popualation mean) is too great to be attributed to chance.
+
+#4 possible outcomes of NHST
+Either the null is true or it's false and then, as scientists, we have to successfully pick this out.
+
+|               | Retain Null                | Reject Null         |
+|:-------------:|----------------------------|---------------------|
+| Null is true  | Correct decision           | Type 2 error (miss) |
+| Null is false | Type 1 error (false alarm) | Correct decision    |
+
+##NHST Overview
+\[p=P(D|H_0)\]
+
+Given that the null hypothesis is true, the probability of these, or more extreme data, is p. 
+
+This does not mean the probability of the null hypothesis being true in p. 
+
+In other words, \[P(D|H_0)!=P(H_0|D)\]
+
+##Sampling Distributions
+The sampling distribution is a distribution of a sample statistic. While the concept of a distribution of a set of numbers is intuitive, the concept of a distribution of a set of statistics is not. 
+
+Rather than using NHST on distributions of individuals we use NHST on distributions of sample statistics.
+
+A sampling Distributions is a distribution of sample statistics, obtained from multiple samples, for example, a distribution of sample means, of sample correlations, or of sample regression coefficients. 
+
+## Central Limit Theorem
+Here we have a normal population of data representing heights with a mean of 175 cm and a standard deviation of 5 cm and we repeatedly take 30 data points from this and calculate a mean of each one. Then we plot this to get a distribution of means. 
+
+```{r}
+data.set <- rnorm(100000,175,5)
+hist(data.set,xlab = "height", main = "histogram of heights")
+out <- replicate( 1000, mean( sample(data.set, 30) ) )
+hist(out, main="sampling distribution of the sample mean")
+mean(out)
+SD.mean <- sd(data.set) / sqrt(30)
+```
+
+The central limit states that this distribution of means will also be normally distributed. Even if the population is not normally distributed our sampling distribution will still be approximately normal according to the central limit theorem so long as our sample size is large enough ~ 30. The central limit theorem also states that the mean of a sampling distribution is the same as the mean of the population and the standard deviation of the sample means equals the standard error of the population mean.
+
+\[\sigma_{\bar{X}}=\frac{\sigma}{\sqrt{n}}\]
+
+http://mfviz.com/central-limit/
+
+This foundational theory in statistics is what allows us to make inferences about populations based on an individual sample. Given our understanding of the normal distribution, we can easily discuss the probability of a value occuring given a mean.
+
+For instance, say we have a sample of 50 batteries that last for a mean of 97 hours. Assuming that standard deviation of the population is known to be 10 hours use a 0.05 significance level to test the claim that the population mean of all such batteries is 100 hours. So our null is that the batteries last for 100 hours and our alternative hypothesis is that they don't last 100 hours. 
+
+```{r}
+x=seq(70,130,length=200)
+y=dnorm(x,mean=100,sd=10)
+plot(x,y,type="l")
+```
+```{r}
+x=seq(-3.5,3.5,length=200)
+y=dnorm(x,mean=0,sd=1)
+plot(x,y,type="l")
+```
+
+For convenience, the above distribution is transformed into the standard normal distribution by using the z-score of the sample mean. So the z score for our sample mean is:
+
+```{r}
+z <- (97 - 100) / (10/sqrt(50)) ; z
+```
+```{r}
+pnorm(-2.12132)
+```
+```{r,echo=FALSE}
+#------- shade.tails -------------------
+# draw probability density functions of t with critical regions shaded.  
+#   by default the function draws the 95% confidence interval on the normal
+#   distribution.
+#
+# Input parameters
+#	crit - the critical value of t (always a positive number)
+#	df - degrees of freedom of the t distribution
+#	tail - "upper", "lower" or "both"
+#	xlim - the x axis range is -xlim to +xlim
+
+shade.tails <- function(crit=1.96, df = 10000, tail = "both",xlim=3.5) 
+{
+
+curve(dnorm(x),-xlim,xlim,ylab="y",xlab="x")
+
+ylow = dt(xlim,df)
+pcrit = pt(crit,df)
+caption = paste(signif(1-pcrit,3))
+
+if (tail == "both" | tail == "lower") {
+	xx <- seq(-xlim,-crit,0.05)
+	yy <- dt(xx,df)
+	polygon(c(xx,-crit,-xlim),c(yy,ylow,ylow),col = "red")
+#	text(-crit,dt(crit,df)+0.04,caption)
+}
+if (tail =="both" | tail == "upper") {		
+	xx2 <- seq(crit,xlim,0.05)
+	yy2 <- dt(xx2,df)
+	polygon(c(xx2,xlim,crit),c(yy2,ylow,ylow), col = "red")
+#	text(crit,dt(crit,df)+0.02,caption)
+}
+}
+shade.tails()
+```
+
+
+```{r}
+data.set <- rexp(100000,1)
+hist(data.set)
+out <- replicate( 1000, mean( sample(data.set, 30) ) )
+hist(out, main="sampling distribution of the sample mean")
+```
+
+In statistics we use 'Null distributions' which are the sampling distributions of our statistics under the null hypothesis. We can plot the area under to curve for specific test statistics we have calculated to get probability values.
+
+```{r}
+#pnorm gives the area under the standard normal curve to the specified value
+pnorm(0)
+# draw the normal curve
+x=seq(-3,3,length=200)
+y=dnorm(x,mean=0,sd=1)
+plot(x,y,type="l")
+x=seq(-3,0,length=100)
+y=dnorm(x,mean=0,sd=1)
+polygon(c(-3,x,0),c(0,y,0),col="red")
+ 
+pnorm(1.64)
+x=seq(-3,3,length=200)
+y=dnorm(x,mean=0,sd=1)
+plot(x,y,type="l")
+x=seq(-3,1.64,length=100)
+y=dnorm(x,mean=0,sd=1)
+polygon(c(-3,x,1.64),c(0,y,0),col="red")
+```
+
+#Confidence Intervals 
+##Confidence intervals around sample means 
+
+All sample statistics e.g. a sample mean, are point estimates i.e. one point from a sample distribution. More specifically, a sample mean represents a single point in a sampling distribution. Any one sample will never be perfect. 
+The logic of confidence intervals is to report a range of values, rather than a single value. In other words, report an interval estimate rather than a point estimate. 
+
+We can define a confidence interval as an interval estimate of a population parameter, based on a random sample. The degree of confidence, e.g. 95%, represents the probability that the interval captures the true population parameter. 
+
+The main argument for interval estimates is the reality of sampling error. Sampling error implies that point estimates will vary from one study to the next (we use standard error to get a measure of sampling error). A researcher will therefore be more confident about accuracy with an interval estimate. 
+
+Below we can see that if we take a sample mean from a normal distribution we get different values each time due to sampling error. However, because our sample size is relatively big (30), this is quite small.
+
+```{r}
+x<-rnorm(10000,100,10)
+mean(x)
+y <- replicate(10, {
+  mm <- sample(x,30)
+  mean(mm)
+  print(mean(mm))
+  })
+hist(y)
+```
+
+But if we reduce sample size to 10 there's more fluctuation in the point estimates i.e. the sample means. 
+
+```{r}
+x<-rnorm(10000,100,10)
+mean(x)
+y <- replicate(10, {
+  mm <- sample(x,10)
+  mean(mm)
+  print(mean(mm))
+  })
+hist(y)
+```
+
+The width of a confidence interval is influenced by sample size (as sample size increases you can be more confident that the interval will contain the estimate) and variance in the population (and sample). That is to say that standard error influences the width of the confidence intervals. 
+
+The general form of a confidence interval is: point estimate $\pm$ Z * the standard error of the point estimate
+
+### Calculating Confidence Intervals around sample means
+For the standard normal distribution there is a 95% probability that a standard normal variable, Z, will fall between -1.96 and 1.96. 
+
+```{r,echo=FALSE}
+plot(seq(-3.2,3.2,length=50),dnorm(seq(-3,3,length=50),0,1),type="l",xlab="",ylab="",ylim=c(0,0.5))
+segments(x0 = c(-1.96,1.96),y0 = c(-1,-1),x1 = c(-1.96,1.96),y1=c(0.4,0.4))
+text(x=0,y=0.3,labels = expression("95% of the data within 1.96" ~ sigma))
+arrows(x0=c(-1.5,1.5),y0=c(0.3,0.3),x1=c(-1.96,1.96),y1=c(0.3,0.3))
+```
+This last expression, then, provides the 95% confidence interval for the population mean, and this can also be expressed as:
+
+\[\bar{X}\pm 1.96 \frac{\sigma}{\sqrt{n}}\]
+
+
+Thus, the margin of error is 1.96 times the standard error (the standard deviation of the point estimate from the sample), and 1.96 reflects the fact that a 95% confidence level was selected.
+
+Here we assume that the sample mean is 5, the standard deviation of the population is 2, and the sample size is 20. In the example below we will use a 95% confidence level and wish to find the confidence interval. The commands to find the confidence interval in R are the following:
+
+```{r}
+a <- 5
+s <- 2
+n <- 20
+error <- qnorm(0.975)*s/sqrt(n)
+left <- a-error
+right <- a+error
+left
+right
+```
+
+This produces a mean of 5 with a 95% confidence interval ranging from 4.123477 to 5.876523
+
+Calculating the confidence interval when we don't know the population standard deviation is similar to using a normal distribution. The only difference is that we use the command associated with the t-distribution rather than the normal distribution. Here we repeat the procedures above, but we will assume that we are working with a sample standard deviation rather than an exact standard deviation.
+
+\[\bar{X}\pm 2.093024 \frac{\sigma}{\sqrt{n}}\]
+
+
+```{r,echo=FALSE}
+plot(seq(-3.2,3.2,length=50),dnorm(seq(-3,3,length=50),0,1),type="l",xlab="",ylab="",ylim=c(0,0.5))
+segments(x0 = c(-2.093024,2.093024),y0 = c(-1,-1),x1 = c(-2.093024,2.093024),y1=c(0.4,0.4))
+text(x=0,y=0.3,labels = expression("95% of the data within 2.093024" ~ sigma))
+arrows(x0=c(-1.5,1.5),y0=c(0.3,0.3),x1=c(-2.093024,2.093024),y1=c(0.3,0.3))
+```
+
+
+```{r}
+a <- 5
+s <- 2
+n <- 20
+error <- qt(0.975,df=n-1)*s/sqrt(n)
+left <- a-error
+right <- a+error
+left
+right
+```
+This produces a mean of 5 with a 95% confidence interval ranging from 4.063971 to 5.936029.
+
+However, we may be unlucky when we calculate our confidence intervals such that they won't capture the population parameter.
+
+```{r, echo=FALSE}
+N <- 50
+n <- 5
+v <- matrix(c(0,0),nrow=2)
+for (i in 1:N) {
+  x <- rnorm(n)
+  v <- cbind(v, t.test(x)$conf.int)
+}
+v <- v[,2:(N+1)]
+plot(apply(v,2,mean), ylim=c(min(v),max(v)),
+     ylab='Confidence interval', xlab='')
+abline(0,0)
+c <- apply(v,2,min)>0 | apply(v,2,max)<0
+segments(1:N,v[1,],1:N,v[2,], col=c(par('fg'),'red')[c+1], lwd=3)
+title(main="The population mean need not be in the confidence interval")
+```
+
+#Correlation
+A statistical procedure used to measure and describe the relationship between two variables 
+
+Correlations can range between +1 and -1
+
++1 is perfect positive correlation
+
+```{r, echo=FALSE}
+x = rnorm(100,mean=100,sd=10)
+y = jitter(x, factor=10, amount = 10)
+plot(x,y,main="Positive relationship",pch=16)
+```
+
+0 is no correlation (independence)
+
+```{r, echo=FALSE}
+x0 = rnorm(100,mean=100,sd=10)
+y0 = rnorm(100,mean=100,sd=10)
+plot(x0,y0,main="No relationship",pch=16)
+```
+
+
+-1 is perfect negative correlation
+
+```{r, echo=FALSE}
+y = jitter(-x, factor=10, amount = 10)
+plot(x,y,main="Negative relationship",pch=16)
+```
+
+When two variables, let's call them X and Y, are correlated, then one variable can be used to predict the other variable.
+
+More precisely, a person's score on X can be used to predict his or her score on Y. 
+
+For example, working memory capacity is strongly correlated with intelligence, or IQ, in healthy young adults
+
+So if we know a person's IQ then we can predict how they will do on a a test of working memeory. 
+
+We can see in this scatterplot that there is a positive correlation in our data, which is verified by the value we get for our correlation.
+
+```{r}
+IQ <- rnorm(250, mean = 100, sd = 10)
+workingMemory <- IQ*rnorm(250, mean = 3, sd = 0.5)/100
+df = data.frame(IQ, workingMemory)
+plot(df$workingMemory~df$IQ, xlab="IQ" , ylab="working memory", pch = 16, main = "working memory and intelligence")
+cor.test(df$IQ, df$workingMemory)
+```
+
+##Warnings about correlation
+But we have to remember that correlation does not imply causation. In our example, working memory does not cause IQ and vice versa, rather there are lots of intervening variables. 
+
+The magnitude of a correlation is influenced by many factors, including: sampling (random and representative?), and the measurement of X & Y (are your measures of IQ reliable?). 
+
+When you fail to get a representative sample you can get attenutation of correlation due to a restriction of range in one of your variables. For instance, if you only select college graduates, you have preselected for higher IQ and this can reduce the correlation.
+
+This restriction of range essentially restricts variance ultimately impacting our ability to discern covariance. In the following scatterplot and correlation measure you can see this effect.
+
+```{r}
+dfAttenuated <- df[df$IQ >110, ]
+plot(dfAttenuated$workingMemory~dfAttenuated$IQ, xlab="IQ" , ylab="working memory", pch = 16, main = "working memory and intelligence")
+cor.test(dfAttenuated$IQ, dfAttenuated$workingMemory)
+```
+
+Finally, a correlation coefficient is a sample statistic just like the mean and won't be representative unless the correlation coefficient is 1. 
+
+##Types of Correlation
+There are several types of correlation coefficients, for different variable types. 
+
+####The Pearson product-moment correlation coefficient (r)
+
+This is used when both variables, X & Y, are continuous. 
+
+####The Point bi-serial correlation
+
+This is used when 1 variable is continuous and 1 is dichotomous. 
+
+####The Phi coefficient
+When both variables are dichotomous 
+
+####Spearman rank correlation
+When both variables are ordinal (ranked data)
+
+## Focus on Pearson correlation
+It gives a number termed r which is the degree to which X and Y vary together, relative to the degree to which X and Y vary independently. 
+
+###Covariance
+Covariance measures the relationship between two variables. 
+
+The formula for covariance is: 
+\[cov(X,Y) = \frac {\Sigma(X-M_x)(Y-M_y)}{N}\]
+
+The numerator is also known as the sum of cross products. It is the product of the deviations of the X and Y values from their respective means.
+
+The covariation can be adjusted for the number of observations by dividing by N (number of cases) to produce the covariance--the average or mean amount that the paired observations covary.
+
+Covariance itself is not scaled, so it can't tell you the strength of that relationship. To account for this, correlation takes covariance and scales it by the product of the standard deviations of the two variables.
+
+In R, the functions for covariance and correlation are **cov** and **cor.test** respectively. 
+
+```{r}
+cov(df$IQ,df$workingMemory) # covariance score
+cor.test(df$IQ,df$workingMemory) # correlation score
+```
+
+to get the correlation score we divide the measure of covariance by the product of the variances of the X and Y variables. 
+
+#\[\begin{array}{lcc}  r=\frac{\frac {\Sigma(X-M_x)(Y-M_y)}{N}}{\sqrt\frac{\Sigma(X-M_x)^2}{N}\sqrt\frac{\Sigma(Y-M_y)^2}{N}} \end{array}\]
+
+###Anscombe's Quartet
+Why it's critical to look at your scatterplots.
+
+Four datasets where the correlation is exactly the same.
+The datasets also have the same variance. But clearly there are differences in these datasets. 
+
+
+```{r, echo=FALSE}
+require(stats); require(graphics)
+#summary(anscombe)
+
+##-- now some "magic" to do the 4 regressions in a loop:
+#ff <- y ~ x
+#mods <- setNames(as.list(1:4), paste0("lm", 1:4))
+#for(i in 1:4) {
+#  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  ## or   ff[[2]] <- as.name(paste0("y", i))
+  ##      ff[[3]] <- as.name(paste0("x", i))
+#  mods[[i]] <- lmi <- lm(ff, data = anscombe)
+#  print(anova(lmi))
+#}
+
+## See how close they are (numerically!)
+#sapply(mods, coef)
+#lapply(mods, function(fm) coef(summary(fm)))
+
+## Now, do what you should have done in the first place: PLOTS
+#op <- par(mfrow = c(2, 2), mar = 0.1+c(4,4,1,1), oma =  c(0, 0, 2, 0))
+#for(i in 1:4) {
+#  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+#  plot(ff, data = anscombe, col = "red", pch = 21, bg = "orange", cex = 1.2,
+#       xlim = c(3, 19), ylim = c(3, 13))
+#  abline(mods[[i]], col = "blue")
+#}
+#mtext("Anscombe's 4 Regression data sets", outer = TRUE, cex = 1.5)
+#par(op)
+```
+
+
+
+```{r, echo=FALSE}
+require("ggplot2")
+require("gridExtra")
+
+cor1 <- format(cor(anscombe$x1, anscombe$y1), digits=2)
+cor2 <- format(cor(anscombe$x2, anscombe$y2), digits=2)
+cor3 <- format(cor(anscombe$x3, anscombe$y3), digits=2)
+cor4 <- format(cor(anscombe$x4, anscombe$y4), digits=2)
+ 
+line1 <- lm(y1 ~ x1, data=anscombe)
+line2 <- lm(y2 ~ x2, data=anscombe)
+line3 <- lm(y3 ~ x3, data=anscombe)
+line4 <- lm(y4 ~ x4, data=anscombe)
+ 
+circle.size = 5
+colors = list('red', '#0066CC', '#4BB14B', '#FCE638')
+ 
+plot1 <- ggplot(anscombe, aes(x=x1, y=y1)) + geom_point(size=circle.size, pch=21, fill=colors[[1]]) +
+  geom_abline(intercept=line1$coefficients[1], slope=line1$coefficients[2]) +
+  annotate("text", x = 12, y = 5, label = paste("correlation = ", cor1))
+ 
+plot2 <- ggplot(anscombe, aes(x=x2, y=y2)) + geom_point(size=circle.size, pch=21, fill=colors[[2]]) +
+  geom_abline(intercept=line2$coefficients[1], slope=line2$coefficients[2]) +
+  annotate("text", x = 12, y = 3, label = paste("correlation = ", cor2))
+ 
+plot3 <- ggplot(anscombe, aes(x=x3, y=y3)) + geom_point(size=circle.size, pch=21, fill=colors[[3]]) +
+  geom_abline(intercept=line3$coefficients[1], slope=line3$coefficients[2]) +
+  annotate("text", x = 12, y = 6, label = paste("correlation = ", cor3))
+ 
+plot4 <- ggplot(anscombe, aes(x=x4, y=y4)) + geom_point(size=circle.size, pch=21, fill=colors[[4]]) +
+  geom_abline(intercept=line4$coefficients[1], slope=line4$coefficients[2]) +
+  annotate("text", x = 15, y = 6, label = paste("correlation = ", cor4))
+ 
+grid.arrange(plot1, plot2, plot3, plot4, top='Anscombe Quadrant -- Correlation Demostration')
+```
+
+# Exercise 
+Using the following vectors of data draw a histogram of each variable, calculate their mean, standard deviation, plot them against one another and calculate their covariance and correlation.  
+
+```{r}
+height <- c(163, 185, 155, 195, 168, 198, 200, 146, 179, 160, 180, 170)
+weight <- c(65, 85, 70, 120, 73, 100, 103, 50, 81, 64, 90, 78)
+```
+
+#Regression
+A regression is a statistical analysis used to predict scores on an outcome variable, based on scores on one or multiple predictor variables. It differs from correlation because the variables are no longer interchangeable. 
+
+Simple regression: one predictor variable 
+
+Multiple regression: multiple predictor variables
+
+##Regression equation
+\[Y = m + bX + e\]
+this is the equation of a line 
+
+Y = a linear function of X
+
+m = intercept
+
+b = slope
+
+e = residual error
+
+other notation, more commonly used for statistics
+\[Y = B_0 +B_1X_1 + e\]
+
+Y = a linear function of $X_1$
+
+$B_0$ = intercept = regression constant 
+
+$B_1$ = slope = regression coefficient 
+
+e = residual error
+
+###Simple regression example
+
+In R, the function for a linear regression model is **lm**
+
+```{r}
+set.seed(20)
+body <- rnorm(250, mean = 100, sd = 10)
+brain <- body*rnorm(250, mean = 3, sd = 0.5)/100
+df = data.frame(body, brain)
+plot(df$brain~df$body, xlab="body mass (kg)" , ylab="brain mass (kg)", pch = 16, main = "brain size as a function of body size")
+cor.test(df$body, df$brain)
+model1 <- lm(df$brain~df$body)
+abline(model1)
+summary(model1)
+```
+
+The estimate of the slope is 0.02599, so with every one unit increase in X there is a 0.02599 increase in Y. 
+
+The estimate of the intercept is 0.38105, the predicted score on Y when X = 0. Thus the regression equation is 
+
+\[Y=0.38105+0.02599(X)\]
+
+$R^2$ the percentage of variance in Y explained by the model. In our case it is the percentage of variance of brain size explained by body size. 
+
+In a simple regression the $R^2$ value 0.2323 is equal to the correlation coefficient 0.4819546 to the power of 2.
+
+```{r}
+0.4819546^2
+```
+
+The goal with regression is to produce better models so we can generate more accurate predictions.
+
+Add more predictor variables and/or develop better predictor variables.
+
+##Calculation of regression coefficients
+Regression equation
+\[Y = B_0 + B_1X_1 + e\]
+
+\[\hat{Y} = B_0 + B_1X_1\] where $\hat{Y}$ is the predicted score for Y
+
+\[Y-\hat{Y} = e(residual)\]
+
+The values of the coefficients (e.g. $B_1$) are estimated such that the regression model yields optimal predictions. What we want to do is minimise the residuals i.e. minimise the prediction error.
+
+```{r}
+x<- c(2000,2001,2002,2003,2004,2005)
+y<-c(9.34,8.50,7.62,6.93,6.60,7.2)
+m1<-lm(y~x)
+fitted<-predict(lm(y~x))
+plot(x,y, pch =16, xlim = c(2000,2005), ylim = c(5,10))
+abline(m1)
+for (i in 1:6) lines(c(x[i],x[i]),c(y[i],fitted[i]))
+
+```
+
+
+###Ordinary least squares estimation 
+Minimise the sum of the squared (SS) residuals
+
+SS.Residual = \[\Sigma(Y-\hat{Y})^2\]
+
+The best fit slope is found by rotating the line until the SS.Residual is minimised.
+
+http://setosa.io/ev/ordinary-least-squares-regression/
+
+###Formula for the unstandardised coefficient - the slope
+In a simple linear regression there are a number of ways to calculate the unstandardised regression coefficient. 
+
+covariance of x & y / variance of x
+
+\[B_1=\frac{\frac {\Sigma(X-M_x)(Y-M_y)}{N}}{\frac{\Sigma(X-M_x)^2}{N}}\]
+
+But conceptually, the regression coefficient is the ratio of the covariation between both variables to the variation of the independent variable.
+
+This regression slope gives a useful quantity interpreted as the estimated change in the expected value of Y for a given value of X. Specifically, it tells you the change in the expected value of Y corresponding to a 1-unit increase in X. This information can not be deduced from the correlation coefficient alone.
+
+####What is the relationship between b ( the slope) and r (the correlation coefficient)?
+
+\[B_1 = r * (\frac{SD_y}{SD_x})\] 
+
+where r is the correlation coefficient.
+
+###Formula for the Intercept in a regression model
+
+We can calculate the intercept $B_0$ in the regression model by using the value we found for the slope along with the mean values for x and y. 
+
+\[B_0 = M_y - B_1*M_x\] 
+
+Note that if there is no slope (i.e., an increase in X produces no increase in Y), so that $B_1=0$ the second term on the right would also be 0.
+
+and the intercept, $B_0$, would be equal to the mean of the dependent variable, Y.
+
+Thus, the "slope" in the scatterplot would be a straight line from right to left, drawn at the mean of Y.
+
+###What is the t value?
+
+t = (the test statistic - the hypothesised value) / the standard error of the statistic 
+
+As applied here, the statistic is the sample value of the slope and the hypothesized value is 0.
+
+#Assumptions of linear regression
+
+##Linearity
+This assumption requires that the dependent variable \textbf{y} is a linear combination of the explanatory variables \textbf{X} and the error terms \epsilon. It requires the specified model to be linear in parameters, but it does not require the model to be linear in variables. Here is a linear model which is both, linear in parameter and variables. 
+
+\[y = B_0 + B_1X_1+B_2X_2 +\epsilon\] 
+
+In order for OLS to work the specified model has to be linear in parameters. Note that if the true relationship between \textbf{x_{1}} and \textbf{y} is non linear it is not possible to estimate the coefficient \beta in any meaningful way.
+
+The following shows a model in which $B_1$ is quadratic
+
+\[y = B_0 + (B_1)^2X_1+B_2X_2+\epsilon\] 
+
+However, the assumption does not require the model to be linear in variables. OLS will produce a meaningful estimation of $B_{1}$ in the following:
+
+\[y = B_0 + B_1(X_1)^2+B_2X_2+\epsilon\] 
+
+##Normally distributed residuals 
+
+There is a very persistent myth that when we assess normality we are referring to the distribution of the original data. This is wrong, when we assess normality we do so with reference to the residuals or errors. 
+
+This means that in the population, for any particular X you can measure many Y's, and the Y's for any particular X are normally distributed.
+
+##Return to Anscombe's Quartet
+The following graphs and their regression coefficients show how similar the four data sets are, even for linear regression models. The regression equation for each is approximately:
+
+\[\hat{Y}=3+0.5(X_1)\]
+
+```{r, echo=FALSE}
+require(stats); require(graphics)
+#summary(anscombe)
+
+##-- now some "magic" to do the 4 regressions in a loop:
+ff <- y ~ x
+mods <- setNames(as.list(1:4), paste0("lm", 1:4))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  ## or   ff[[2]] <- as.name(paste0("y", i))
+  ##      ff[[3]] <- as.name(paste0("x", i))
+  mods[[i]] <- lmi <- lm(ff, data = anscombe)
+ # print(anova(lmi))
+}
+
+# See how close they are (numerically!)
+sapply(mods, coef)
+#lapply(mods, function(fm) coef(summary(fm)))
+
+## Now, do what you should have done in the first place: PLOTS
+op <- par(mfrow = c(2, 2), mar = 0.1+c(4,4,1,1), oma =  c(0, 0, 2, 0))
+for(i in 1:4) {
+  ff[2:3] <- lapply(paste0(c("y","x"), i), as.name)
+  plot(ff, data = anscombe, col = "red", pch = 21, bg = "orange", cex = 1.2,
+       xlim = c(3, 19), ylim = c(3, 13))
+  abline(mods[[i]], col = "blue")
+}
+mtext("Anscombe's 4 Regression data sets", outer = TRUE, cex = 1.5)
+par(op)
+```
+
+But only the top left panel looks suitable for a linear regression model. The others look like they don't satisfy the various assumptions of linear regression. 
+
+In order to test this we can save the residuals of each model. 
+
+\[Y=B_0+B_1+e\]
+
+where
+
+\[e=(Y-\hat{Y})\]
+
+We can then look at the residuals as a function of the X predictor variable. Then we examine a scatterplot with the X variable on the X-axis and the residuals on the Y-axis.
+
+```{r, echo=FALSE}
+# Set to put all four in one plot
+# This is optional, but makes it easier to compare
+#par( mfrow = c(2,2))
+
+
+# Set margins to make them fit better
+#par( mar = c(5, 4, 1, 2) + 0.1)
+
+# Plot them
+#plot(y1 ~ x1, data = anscombe)
+#abline(ansA, col = "red3",lwd = 2)
+
+#plot(y2 ~ x2, data = anscombe)
+#abline(ansB, col = "red3",lwd = 2)
+
+#plot(y3 ~ x3, data = anscombe)
+#abline(ansC, col = "red3",lwd = 2)
+
+#plot(y4 ~ x4, data = anscombe)
+#abline(ansD, col = "red3",lwd = 2)
+```
+
+```{r, echo=FALSE}
+# Set to put all four in one plot
+
+ansA <- lm(y1 ~ x1, data = anscombe)
+ansB <- lm(y2 ~ x2, data = anscombe)
+ansC <- lm(y3 ~ x3, data = anscombe)
+ansD <- lm(y4 ~ x4, data = anscombe)
+
+par( mfrow = c(2,2))
+
+# Set margins to make them fit better
+par( mar = c(5, 4, 1, 2) + 0.1)
+
+# Plot the residutals
+plot( resid(ansA) ~ anscombe$x1 ,col = "red", pch = 21, bg = "orange", cex = 1.2)
+plot( resid(ansB) ~ anscombe$x2 ,col = "red", pch = 21, bg = "orange", cex = 1.2)
+plot( resid(ansC) ~ anscombe$x3 ,col = "red", pch = 21, bg = "orange", cex = 1.2)
+plot( resid(ansD) ~ anscombe$x4 ,col = "red", pch = 21, bg = "orange", cex = 1.2)
+```
+
+The plot in the top left is what we are looking for. We don't want any pattern in our residual plot and this suggests no systematic error. The other plots suggest there is a relationship between X and the residual. 
+
+##Homoscedasticity and heteroscedasticity
+The idea of Homoscedasticity is that our residuals are not related to X, the independent variable. The residuals should be chance errors and not systematic. 
+If the residuals are related to X then we suspect some sort of confound in our study. This is termed Heteroscedasticity. 
+
+A classic example of heteroscedasticity is that of income versus expenditure on meals. As one's income increases, the variability of food consumption will increase. A poorer person will spend a rather constant amount by always eating inexpensive food; a wealthier person may occasionally buy inexpensive food and at other times eat expensive meals. Those with higher incomes display a greater variability of food consumption.
+
+```{r, echo=FALSE}
+set.seed(123456)
+x = rnorm(500,40000,10000)
+b0 = 1 # intercept chosen at your choice
+b1 = 1 # coef chosen at your choice
+h = function(x) 1+.4*x # h performs heteroscedasticity function (here I used a linear one)
+eps = rnorm(500,0,h(x))
+y = b0 + b1*x + eps
+plot(x,y, pch = 16)
+#abline(lsfit(x,y))
+#abline(b0,b1,col=2)
+
+```
+##Independence of errors
+Repeated measures through time on the same individual will have non-independent errors because peculiarities of the individual will be reflected in all of the measurements made on it (the repeated measures will be temporally correlated with one another). 
+
+Similarly, samples taken from the same vicinity will have non-independent errors because peculiarities of the location will be common to all of the samples (this is spatial autocorrelation).
+
+##Diagnostic Plots
+Again R has some inbuilt functions to run diagnostic tests on the the results of your linear regression to see if the model adheres to the assumption.
+
+It's worth noting some definitions beforehand.
+
+Outliers: an outlier is defined as an observation that has a large residual. In other words, the observed value for the point is very different from that predicted by the regression model.
+
+Leverage points: A leverage point is defined as an observation that has a value of x that is far away from the mean of x. 
+
+Influential observations: An influential observation is defined as an observation that changes the slope of the line. Thus, influential points have a large influence on the fit of the model. One method to find influential points is to compare the fit of the model with and without each observation.
+
+```{r}
+fit = lm(mpg ~ wt, data = mtcars)
+plot(fit)
+```
+
+
+###Residuals vs Fitted values
+The first plot shows your Residuals vs Fitted values
+
+This plot shows if residuals have non-linear patterns. There could be a non-linear relationship between predictor variables and an outcome variable and the pattern could show up in this plot if the model doesn't capture the non-linear relationship. If you find equally spread residuals around a horizontal line without distinct patterns, that is a good indication you don't have non-linear relationships.
+
+###Normal Q-Q
+
+This plot shows if residuals are normally distributed. Do residuals follow a straight line well or do they deviate severely? It's good if residuals are lined well on the straight dashed line.
+
+###Scale-Location
+
+It's also called Spread-Location plot. This plot shows if residuals are spread equally along the ranges of predictors. This is how you can check the assumption of equal variance (homoscedasticity). It's good if you see a horizontal line with equally (randomly) spread points.
+
+###Residuals vs Leverage
+
+This plot helps us to find influential cases (i.e., subjects) if any. Not all outliers are influential in linear regression analysis (whatever outliers mean). Even though data have extreme values, they might not be influential to determine a regression line. That means, the results wouldn't be much different if we either include or exclude them from analysis. They follow the trend in the majority of cases and they don't really matter; they are not influential. On the other hand, some cases could be very influential even if they look to be within a reasonable range of the values. They could be extreme cases against a regression line and can alter the results if we exclude them from analysis. Another way to put it is that they don't get along with the trend in the majority of the cases.
+
+Unlike the other plots, this time patterns are not relevant. We watch out for outlying values at the upper right corner or at the lower right corner. Those spots are the places where cases can be influential against a regression line. Look for cases outside of a dashed line, Cook's distance. When cases are outside of the Cook's distance (meaning they have high Cook's distance scores), the cases are influential to the regression results. The regression results will be altered if we exclude those cases.
+
+The assumption of a random sample and independent observations cannot be tested with diagnostic plots. It is an assumption that you can test by examining the study design.
+
+#Exercise
+Given these data, plot them, run a linear regression model, draw a line of best fit, write out the resulting regression equation and assess the model using diagnostic tests. 
+
+```{r}
+height <- c(163, 185, 155, 195, 168, 198, 200, 146, 179, 160, 180, 170, 190)
+weight <- c(65, 85, 70, 120, 73, 100, 103, 50, 81, 64, 90, 78, 71)
+```
+
+#Multiple Regression
+In a multiple regression there are multiple predictors (X1,X2,X3...Xn), in contrast to a simple regression where there's only one predictor.
+
+\[\hat{Y} = B_0 + B_1X_1 + B_2X_2 + ... B_nX_n\]
+
+\[\hat{Y}\] = predicted value on the outcome variable Y
+
+\[B_0\] = predicted value on Y when all X = 0 
+
+\[X_k\] = predictor variables
+
+\[B_k\] = unstandardised regression coefficients
+
+\[Y - \hat{Y}\] = residual (prediction error)
+
+k = number of predictor variables
+
+In this example we have data on the salaries of academics and some associated covariates that we want to use to predict salary. Notice that we have included a categorical variable for the gender of the academic. We can recode this in R to 1s and 0s but R will also cope with this type of variable automatically. 
+
+```{r,echo=FALSE}
+setwd("C:\\Users\\akane\\Desktop\\Science\\Teaching\\R-Course-UCC")
+data<-read.csv("Salaries.csv",header=T,sep=",")
+head(data)
+# recode the nominal variable of sex into a new dummy variable where female gets a 1 and male gets a 0
+data$sex <- factor(with(data,ifelse((sex == "Female"),1,0)))
+head(data)
+# we can invent a new variable for the number of publications 
+set.seed(100)
+pubs <- round(rnorm(data$yrs.since.phd, mean= 30,sd=8))
+head(pubs)
+data["pubs"] <- pubs
+summary(data)
+```
+
+The R function for a multiple regression is the same as for a simple regression, **lm**
+
+```{r}
+m1<-lm(data$salary~data$pubs+data$yrs.since.phd+data$sex)
+summary(m1)
+```
+
+We can construct the regression model using the coefficients from the R out put to produce the following:
+
+\[\hat{y} = 88632.5 - 150.4(pubs) + 959.4(PhD) - 8536.2(sex)\]
+
+But, what do these values actually mean? 88632.5 is the intercept of the model and is the predicted salary for a male professor who has no publications and has just graduated from his PhD (predicted score when all X=0). 
+
+959.4 is the predicted change in salary associated with an increase in one year since your PhD, for professors who have an average number of publications and averaged across men and women. In a multiple regression you have to take into account the other variables. It's not simply the predicted change in salary for a unit change in time since PhD. 
+
+This is often stated as the average change in the y variable for a change in a specific x variable, holding all other variables constant. They are held constant at their mean values as we stated. 
+
+According to this model, is the gender difference statistically significant? No because p > 0.05.
+
+## General Linear Model and Generalised Linear Model
+The General Linear Model is a mathematical framework used in many common statistical analyses, including multiple regression. ANOVA is typically presented as distinct from multiple regression but it IS a multiple regression.  
+
+The general linear model requires that the errors follow the normal distribution whilst the generalized linear model is an extension of the general linear model that generalizes the error term distribution to a family of distributions.
+
+#Chi Square Tests
+How to deal with situations where we have a categorical outcome variable e.g. a nominal variable like diagnosis (positive or negative), verdict (guily or innocent) etc. as well as categorical predictors.
+
+The Chi-square goodness of fit statistic determines how well a distribution of proportions "fits" an expected distribution. 
+
+In election polls, is there a statistically significant difference in voter preference among candidates? 
+
+The Chi-square test of independence determines whether there is a relationship between two categorical variables. 
+
+In election polls, is there a relationship between the gender of the voter and the candidate they prefer i.e. is there a contingency.
+
+##Chi-square goodness of fit
+City Mayoral election
+
+Assume a small poll was conducted (N=60) where people were asked do you intend to vote for Joe, Bill or Other?
+
+Let's assume our results were 23 for Joe, 12 for Bill and 25 for Other. 
+
+Our Chi-square goodness of fit tests the null hypothesis that there are equal proportions across those categories. 
+
+The alternative hypothesis is that there are unequal proportions.
+
+\[\chi^2=\sum\frac{(O - E)^2}{E}\]
+
+O = observed
+
+E = expected 
+
+df = # of categories - 1
+
+p-value depends on $\chi^2$ and df
+
+There are a family of chi-square distributions whose shape is determined by df. 
+
+To estimate effect size we use Cramer's V (or Phi)
+
+\[\phi_c=sqrt(\frac{\chi^2}{N(k-1)})\]
+
+N = sample size
+
+k = # of categories
+
+| Joe     | Bill     | Other  |
+|--------|--------|--------|
+| 20 (E) | 20 (E) | 20 (E) |
+| 23(O)  | 12(O)  | 25(O)  |
+
+
+| Subject | O  | E  | (O-E) | (O-E)^2 | (O-E)^2 / E |
+|---------|----|----|-------|---------|-------------|
+| Joe      | 23 | 20 | 3     | 9       | 0.45        |
+| Bill      | 12 | 20 | -8    | 64      | 3.2         |
+| Other   | 25 | 20 | 5     | 25      | 1.25        |
+| Total   | 60 | 60 | 0     | 98      | 4.9         |
+
+$\chi^2$ = 4.90, df=2, p = 0.09
+
+Therefore, retain the null hypothesis and conclude that the slight preferences observed here are not statistically significant.
+
+```{r}
+Observed <- matrix(c(23,12,25),nrow = 3,ncol = 1, byrow = T)
+chisq.test(Observed)
+```
+
+
+For the effect size,
+
+\[\phi_c=sqrt(\frac{\chi^2}{N(k-1)})\]
+
+\[\phi_c=sqrt(\frac{4.90}{60(3-1)}) = 0.2\]
+
+This can be interpreted like a correlation coefficient or a standardised regression coefficient. 
+
+##Chi square test of independence
+The Chi-square test of independence determines whether there is a relationship between two categorical variables. 
+
+In election polls, is there a relationship between the gender of the voter and the candidate they prefer i.e. is there a contingency.
+
+Again, use the example of a mayoral election in a city. 
+
+Assume a small poll was conducted of 200 people. 
+More males than females in the poll (n=140, n=60)
+
+Do you intend to vote for Joe, Bill or other?
+
+Our null is that there is no relationship between gender and voter preference. 
+Our alternative is that there is a relationship between gender and voter preference. 
+
+\[\chi^2=\sum\frac{(O - E)^2}{E}\]
+
+the same as before
+
+df is different and is now (# of rows - 1) * (# of columns -1)
+
+p-value depends on $\chi^2$ and df
+
+To estimate effect size we again use Cramer's V (or Phi)
+
+\[\phi_c=sqrt(\frac{\chi^2}{N(k-1)})\]
+
+N = sample size
+
+k = # of categories or # of rows (whichever is less)
+
+We have to compute the expected frequencies. The proportion of male and female voters for each candidates should be the same as the overall voter preference rates.
+
+To compute the expected frequencies
+
+E=(R/N)*C
+
+E= Expected frequency
+
+R= #of entries in the cell's row
+
+N= total # of entries
+
+C= # of entries in the cell's column
+
+Here is the table for the observed frequencies
+
+|             | Joe  | Bill | Other | Row Sums |
+|-------------|-----|----|-------|----------|
+| Female      | 40  | 10 | 10    | 60       |
+| Male        | 90  | 40 | 10    | 140      |
+| Column Sums | 150 | 50 | 20    | 200      |
+
+Here is the table for the expected frequencies
+
+|  | Joe | Bill | Other | Row Sums |
+|-------------|--------------------|-------------------|-------------------|----------|
+| Female | (60/200) x 130 = 39 | (60/200) x 50 = 15 | (60/200) x 20 = 6 | 60 |
+| Male | (140/200) x 130 = 91 | (140/200) x 50 = 35 | (140/200) x 20 = 14 | 140 |
+| Column Sums | 130 | 50 | 20 | 200 |
+
+Calculate the Chi square score
+
+| Subject | O | E | (O-E) | (O-E)^2 | (O-E)^2 / E |
+|---------|-----|-----|-------|---------|-------------|
+| F/Joe | 40 | 39 | 1 | 1 | 0.03 |
+| F/Bill | 10 | 15 | -5 | 25 | 1.67 |
+| F/Other | 10 | 6 | 4 | 16 | 2.67 |
+| M/Joe | 90 | 91 | 1 | 1 | 0.01 |
+| M/Bill | 40 | 35 | 5 | 25 | 0.71 |
+| M/Other | 10 | 14 | -4 | 16 | 1.14 |
+| Sum | 200 | 200 | 0 | 84 | 6.23 |
+
+$\chi^2$ = 6.23, df = 2, p=0.04
+
+Reject the null and conclude that there is a significant relationship between gender of the voter and the candidate.
+
+For the effect size,
+
+\[\phi_c=sqrt(\frac{\chi^2}{N(k-1)})\]
+
+\[\phi_c=sqrt(\frac{6.23}{200(2-1)}) = 0.18\]
+
+```{r}
+Observed <- matrix(c(40,10,10,90,40,10),nrow = 2,ncol = 3, byrow = T)
+chisq.test(Observed)
+```
+
+#Exercise
+## Are Gender and Snack Preference Independent?
+240 men and 680 women are asked what snacks they prefer to eat at the cinema
+
+100 men and 350 women prefer popcorn
+
+120 men and 200 women prefer revels
+
+60 men and 90 women prefer nachos
+
+Using a chi-square test of independence find out if there is there a relationship between snack preference and gender? 
+
+```{r}
+men = c(100, 120, 60)
+women = c(350, 200, 90)
+```
+
+#T-tests
+Let's assume a simple experimental design
+An independent variable with either vaccine or placebo. And a dependent variable which is the rate of polio.
+
+This will give us two means that can be compared using a t-test. NHST can be conducted, yielding a p-value. Effect size can also be calculated. And confidence intervals around the sample means can also be reported. 
+
+$z=(observed-expected)/SE$
+
+$t=(observed-expected)/SE$
+
+Where SE is standard error
+
+##When to use z and t? 
+A z-test is used when comparing a sample mean to a population mean when the standard deviation of the population is known. 
+
+A single sample t-test is used when comparing a sample mean to a population mean when the standard deviation of the population is unknown. 
+A dependent t-test is used when evaluating the difference between two related samples (e.g. when the same people are measured twice).
+
+An independent t-test is used when evaluating the difference between two independent samples.
+
+| test              | observed                            | expected                                | SE                                 |
+|-------------------|-------------------------------------|-----------------------------------------|------------------------------------|
+| z                 | sample mean                         | population mean                         | SE of the mean                     |
+| t (single sample) | sample mean                         | population mean                         | SE of the mean                     |
+| t (dependent)     | sample mean of difference scores    | population mean of difference scores    | SE of the difference               |
+| t (independent)   | difference between two sample means | difference between two population means | SE of the difference between means |
+
+For dependent we get difference scores at the level of the individual and for the independent we get difference scores at the level of the group.
+
+##p-values for z and t
+Exact p-value depends on:
+
+Directional or non-directional test
+
+Degrees of freedom (df): different t-distributions for different sample sizes
+
+##degrees of freedom for z and t tests
+| test              | df            |
+|-------------------|---------------|
+| z                 | NA            |
+| t (single sample) | N-1           |
+| t (dependent)     | N-1           |
+| t (independent)   | (N1-1)+(N2-1) |
+
+#Dependent t-tests
+Also known as paired samples t-test. This is appropriate when the same subjects are being compared e.g. pre/post design. Or when two samples are matched at the level of individual subjects, allowing for a difference score to be calculated.
+
+A thorough analysis will include a t-value, a p-value, Cohen's d (effect size which is M/SD) and a confidence interval (interval estimate)
+
+The t-value: 
+
+t= (observed - expected)/SE
+
+t=(M-0)/SE=M/SE
+
+Calculate a difference score for each individual and then average them. The expected value under NHST is 0. So it comes down to what did you observe relative to what you would expect due to chance.
+
+The effect size here, Cohen's d, is calculated as the mean of the difference scores divided by the standard deviation of the difference scores. We divide by SD instead of SE because SE is biased by N (recall that SE=SD/SQRT(N)). A Cohen's d of 1 means that you want up by a standard deviation.
+
+Confidence interval:
+
+upper bound = M+t(SE); lower bound = M-t(SE)
+
+t-value depends on the level of confidence and t-distribution.
+
+Let's look at an example of film ratings to see if there was a difference in ratings for Star Wars vs Lord of the Rings. The function for a t-test in R is **t.test** 
+
+```{r}
+library(lsr)
+x<-rnorm(100,80,1)
+y<-rnorm(100,82,1)
+t.test(x,y, paired =T)
+cohensD(x,y,method="paired")
+```
+
+Negative value for t is because of the order. It's arbitrary to the order we chose our x and y.
+
+The 95% confidence intervals are around the mean difference. What's important about the interval estimate is that it does not cover 0 so it should be signifcant. 
+
+# Independent t-tests
+Compares two independent samples e.g. males and females, control and experimental etc. 
+
+t-value
+t=(Observed - Expected)/SE
+
+t=(M1-M2)/SE
+
+SE=(SE1+SE2)/2
+
+Cohen's d 
+
+$d=(M1-M2)/SD_pooled$
+
+$SD_pooled = (SD1+SD2)/2$
+
+We need to pool the SDs of the two groups to get their average variance in the case of independent t. 
+
+#Extra step for indepenent t
+Homogeneity of variance is assumed. 
+The pooled SD is appropriate only if the variances in the two groups are equivalent.
+
+If not, then the homogeneity of variance assumption is violated. Simulations indicates this results in an increased probability of tpe 1 error.
+
+We can detect a violation of this assumption using Levene's test. If this is significant then the homogeneity of variance is violated.
+
+If it is violated we can adjust the df and p-value using Welch's procedure, which can protect against type 1 error, or e can use a non-parametric test.
+
+```{r}
+# example with equal variance
+library(car)
+sample1<-rnorm(100,50,1)
+sample2<-rnorm(100,50,1)
+y <- c(sample1, sample2)
+group <- as.factor(c(rep(1, length(sample1)), rep(2, length(sample2))))
+leveneTest(y,group)
+
+# independent t test
+t.test(y~group,var.equal = T)
+cohensD(y~group,method = "pooled")
+
+#example with unequal variance
+sample1<-rnorm(100,50,1)
+sample3<-rnorm(100,50,4)
+y1 <- c(sample1, sample3)
+group <- as.factor(c(rep(1, length(sample1)), rep(2, length(sample3))))
+leveneTest(y1,group)
+```
+
+Conducting multiple t-tests is tedious and increases the probability of Type 1 error. Instead, when there are more than two group means to compare, conduct analysis of variance (ANOVA).
+
+#Exercise 
+We take a group of patients and want to test the effect of a drug on their test scores before and after their treatment. First, draw a boxplot **boxplot** and calculate the means of each of the samples, then conduct a t test to see if there is an effect. 
+
+```{r}
+before<-c(30,68,45,60,79,40,55,49,82,44,76)
+after<-c(70,68,50,59,81,44,78,53,90,87,80)
+```
+
+
+#Analysis of Variance (ANOVA)
+Appropriate when the predictors (IVs) are all categorical and the outcome (DV) is continuous. Most common application is to analyse data from randomised controlled experiments.
+
+More specifically, randomised controlled experiments that generate more than two group means. If only two group means use a dependent or indenpent t-test.
+
+If you have more than two group means and they're all independent then you use a between groups ANOVA. If you have more than two group means but they're dependent then you use a repeated measures ANOVA.
+
+The null hypothesis for an ANOVA is that all groups are equal.
+
+The ANOVA will tell us if there is an overall effect somewhere. That's what the F-test does. 
+
+ANOVA typically involves NHST. The test statistic is the F-test (F-ratio). F = (variance between groups)/(variance within groups)
+
+The variance within groups is unsystematic and what we would expect due to chance. 
+
+#F-tests
+Like the t-test and family of t-distributions the F-test has a family of F-distributions. The distribution to assume depends on the number of subjects per group and the number of groups.
+
+F tests are most commonly used for two purposes:
+
+1. in ANOVA, for testing equality of means (and various similar analyses); and
+
+2. in testing equality of variances
+
+```{r, echo=FALSE}
+
+x1<-c(1:10)
+y1<-c(1:10)
+z1<-c(1:10)
+data1<-c(x1,y1,z1)
+groups1 = factor(rep(letters[1:3], each = 10))
+fit1 = lm(formula = data1 ~ groups1)
+# anova (fit1)
+fstat <- summary(fit1)$fstatistic ; fstat
+```
+
+```{r, echo=FALSE}
+x2<-c(1:10)
+y2<-c(4:13)
+z2<-c(1:10)
+data2<-c(x2,y2,z2)
+groups2 = factor(rep(letters[1:3], each = 10))
+fit2 = lm(formula = data2 ~ groups2)
+# anova (fit2)
+fstat <- summary(fit2)$fstatistic ; fstat
+```
+
+```{r, echo=FALSE}
+x3<-c(7:16)
+y3<-c(4:13)
+z3<-c(1:10)
+data3<-c(x3,y3,z3)
+groups3 = factor(rep(letters[1:3], each = 10))
+fit3 = lm(formula = data3 ~ groups3)
+# anova (fit3)
+fstat <- summary(fit3)$fstatistic ; fstat
+```
+
+```{r, echo=FALSE}
+x4<-c(19:28)
+y4<-c(4:13)
+z4<-c(1:10)
+data4<-c(x4,y4,z4)
+groups4 = factor(rep(letters[1:3], each = 10))
+fit4 = lm(formula = data4 ~ groups4)
+# anova (fit4)
+fstat <- summary(fit4)$fstatistic ; fstat
+
+```
+
+```{r, echo=FALSE}
+par( mfrow = c(2,2))
+boxplot(x1,y1,z1, horizontal = TRUE, ylim=c(0,30))
+boxplot(x2,y2,z2, horizontal = TRUE, ylim=c(0,30))
+boxplot(x3,y3,z3, horizontal = TRUE, ylim=c(0,30))
+boxplot(x4,y4,z4, horizontal = TRUE, ylim=c(0,30))
+
+```
+
+If the null hypothesis (equality of population means) were true, you'd expect some variation in sample means, and would typically expect to see F ratios roughly around 1. Smaller F statistics result from samples that are closer together than you'd typically expect, so you aren't going to conclude the population means differ.
+
+That is, for ANOVA, you'll reject the hypothesis of equality of means when you get unusually large F-values and you won't reject the hypothesis of equality of means when you get unusually small values (it may indicate something, but not that the population means differ).
+
+```{r}
+x<-seq(0,5,0.01); plot(x,df(x,df1=5,df2=5), type="l")
+```
+
+```{r}
+x<-seq(0,5,0.01); plot(x,df(x,df1=2,df2=27), type="l")
+```
+
+This illustration shows that we only want to reject when F is in its upper tail.
+
+```{r, echo=FALSE}
+fstat <- summary(fit4)$fstatistic
+
+#library(HH)
+old.omd <- par(omd=c(.05,.88, .05,1))
+F.setup(df1=fstat['numdf'], df2=fstat['dendf'])
+F.curve(df1=fstat['numdf'], df2=fstat['dendf'], col='skyblue')
+F.observed(fstat['value'], df1=fstat['numdf'], df2=fstat['dendf'])
+par(old.omd)
+```
+
+2) F tests for equality of variance* (based on variance ratios). Here, the ratio of two sample variance estimates will be large if the numerator sample variance is much larger than the variance in the denominator, and the ratio will be small if the denominator sample variance is much larger than variance in the numerator.
+
+That is, for testing whether the ratio of population variances differs from 1, you'll want to reject the null for both large and small values of F.
+
+* (Leaving aside the issue of the high sensitivity to the distributional assumption of this test (there are better alternatives) and also the issue that if you're interested in suitability of ANOVA equal-variance assumptions, your best strategy probably isn't a formal test.)
+
+F-ratio can be written in a number of ways:
+
+F = between groups variance/ within groups variance
+
+F = $MS_{between}$ / $MS_{within}$
+
+F = $MS_A$ / $MS_{S/A}$
+
+MS = mean squares = variance
+
+If we take the last line to describe F
+
+then $MS_A$ = $SS_A$ / $df_A$
+
+and $MS_{S/A}=SS_{S/A}/df_{S/A}$
+
+We compare each group mean to the grand mean to get variance across groups.
+
+$SS_A=n \Sigma(Y_j - Y_T)^2$ where
+
+$Y_j$ are the group means and
+
+$Y_T$ is the grand mean
+
+For within groups we take an individual's score and take away the group mean to get the within group sums of squares. 
+
+$SS_{S/A}= \Sigma(Y_{ij}-Y_j)^2$ where
+
+$Y_{ij}$ are individual scores and
+
+$Y_j$ are the group means
+
+$df_A=a-1$
+
+$df_{S/A}=a(n-1)$
+
+$df_TOTAL = N-1$
+
+ANOVA can also be biased by sample size so we can derive an effect size. In this case it's called eta-squared (analagous to $R^2$), and is the proportion of variance in the dependent variable exaplained by the independent variable.
+
+$\eta = SS_A/SS_Total$
+
+##Assumptions of ANOVA
+DV is continuous (interval or ratio variable)
+
+Normally distributed errors
+
+Homogeneity of variance: within-groups variance is equivalent for all groups. To test this we can use Levene's test.
+
+As with the independent t test we pool the standard deviations across groups. If Levene's test is significant then homogeneity of variance assumption has been violated and we instead conduct pairwise comparisons using a restricted error term.
+
+```{r}
+y1<-rnorm(20,1,1)
+y2<-rnorm(20,1.5,1)
+y3<-rnorm(20,2,1)
+y4<-rnorm(20,2.5,1)
+
+y = c(y1, y2, y3, y4)
+n = rep(20, 4)
+n
+
+group = rep(1:4, n)
+
+data = data.frame(y = y, group = factor(group))
+fit = aov(y ~ group, data)
+anova(fit)
+
+TukeyHSD(fit)
+```
+
+Our F-value tell us that we have that much times between groups variance as within. It is the ratio of the two mean squares. And the mean squares come from the sum of squares divided by the degrees of freedom.
+
+The TukeyHSD is a post-hoc that does a pair-wise comparison and takes into account the fact we're doing multiple comparisons. It thereby protects from overinflating the chance of Type 1 error.
+
+#Post-hoc tests
+Post-hoc tests in general, allow for multiple pairwise comparisons without an increase in the probability of a Type 1 error.
+
+Many procedures are available, the degree to which p-values are adjusted varies according to procedure. The most liberal involves no adjustment, the most conservative involves the Bonferoni procedure.
+
+Because p = 0.05, if we do the same experiment over and over again, say 100 times to a population where there is no effect, I will get a significant value 5 times. This is what happens when we do multiple comparisons and is the reason we conduct post-hoc tests.
+
+```{r}
+# say for 6 possible pairwise comparisons
+p.adjust(0.05,method = "bonferroni",6)
+```
+
+#Repeated Measures ANOVA
+Previously we dealt with between samples ANOVA which is analagous to independent t tests. Repeated measures ANOVA is analagous to dependent t tests. 
+
+##Pros and cons of repeated measures ANOVA
+###Pros
+Less cost (fewer subjects required)
+
+More statistical power. Subjects may reveal consistent individual differences across experiment i.e. the variance across subjects may be systematic. If so, it will not contribute to the error term. 
+
+In a between groups design we have two areas where variance can occur 1. the systematic / between groups variance or 2. unsystematic/ within groups variance. 
+
+In a repeated measures design we also have the subject variance. Thus, unsystematic/ within groups variance is reduced as a function of stable subject variance. 
+
+Error in a repeated measures design is the inconsistency of subjects from one condition to another. 
+
+$F_A=MS_A/MS_{A*S}$
+
+where A is the variance attributable to your independent variable. 
+
+How much error did we create due to our manipulation is covered by the numerator term $MS_A$. 
+
+The error term in the denominator of the F ratio is mean squares for the interaction between your independent variable and subject variability. 
+
+##Mean Squares and F Ratio
+$MS_A=SS_A/df_A$
+
+$MS_{AxS}=SS_{AxS}/df_{AxS}$
+
+$F=MS_A/MS_{AxS}$
+
+###Cons
+####Counterbalancing
+
+Consider a simple design with just two conditions, A1 and A2 and we're worried about the order to apply these conditions. 
+
+One approach is a Blocked Design.
+Subjects are randomly assigned to one of two "order" conditions e.g. half do the order A1,A2 and the other half do the order A2,A1. 
+
+Another approach is a randomised design such that the conditions are presented randomly in a mixed fashion e.g. A2,A1,A2,A2,A2,A1,A2...
+
+Now suppose a = 3 i.e. 3 levels to the independent variable and a blocked design. There are 6 possible orders (3!). This could spiral out of control with ever more levels. 
+
+A1,A2,A3
+
+A1,A3,A2
+
+A2,A1,A3
+
+A2,A3,A1
+
+A3,A1,A2
+
+A3,A2,A1
+
+To get around this we implement a "Latin Squares" design. Latin Squares aren't completely counterbalanced but every condition appears at every position at least once. For example, if a=3, then,
+
+A1,A2,A3
+
+A2,A3,A1
+
+A3,A1,A2
+
+####Missing Data
+More problematic here because the subjects are compared across conditions. Two issues to consider, the relative amount of missing data and the pattern of missing data. 
+
+We can test if the missing data has a pattern. For any variable of interest (X) create a new variable (XM). Set XM=0 if X is missing and XM=1 if X is not missing. 
+
+Conduct a t-test with XM as the independent variable. If this is significant then the pattern of missing data may be lawful.
+
+Say we measured age, and we want to measure if the missing data is lawful as a function of age. Young people tend not to answer the question 'what is your ethnicity' and this approach could be used to tease out such a pattern.
+
+Remedies to missing data
+
+Drop all the cases without perfect profile. Though this is very drastic, use only if you can afford it. 
+
+Alternatively, keep all cases and estimate the values of the missindg data points. There are several options for how to estimate values e.g. multiple regression.
+
+##Sphericity assumption
+Homogeneity of variance 
+
+AND
+
+Homogeneity of covariance
+
+If we have an independent variable with 3 levels, the standardised pairwise covariance (correlation) between each should be approximately the same. 
+
+You can test for this using Mauchly's test. If it's significant, then report an adjusted p-value using Greenhouse-Geisser or Huyn-Feldt.
+
+#Repeated Measures ANOVA Example
+```{r}
+#Compare prices in local shops. List of ten representative grocery items and then went to four local stores and recorded the price of each item in each shop. The advantage of the repeated measures analysis is that it allows us to parcel out variability due to subjects. In this case the groceries. 
+
+groceries = read.table(header=T, row.names=1, text="
+ subject            storeA  storeB  storeC  storeD     ####
+ lettuce              1.17    1.78    1.29    1.29        #
+ potatoes             1.77    1.98    1.99    1.99        #
+ milk                 1.49    1.69    1.79    1.59        #
+ eggs                 0.65    0.99    0.69    1.09        #
+ bread                1.58    1.70    1.89    1.89        ### you can copy and paste this
+ cereal               3.13    3.15    2.99    3.09        #   part from the table above
+ ground.beef          2.09    1.88    2.09    2.49        #
+ tomato.soup          0.62    0.65    0.65    0.69        #
+ laundry.detergent    5.89    5.99    5.99    6.99        #
+ aspirin              4.46    4.84    4.99    5.15     ####
+ ")
+
+gr2 = stack(groceries)                              # tidy up data
+gr2$subject = rep(rownames(groceries), 4)           # create the "subject" variable
+gr2$subject = factor(gr2$subject)                   # define the subject as factors
+colnames(gr2) = c("price", "store", "subject")      # rename the columns
+gr2                                                 # take a look
+
+
+aov.out = aov(price ~ store + Error(subject/store), data=gr2)
+summary(aov.out)
+
+```
+
+The first part of the summary is the subject variance. 
+
+The second part is the effect of our condition. The df for our condition is 3 because we have 4 shops. 
+
+We can then carry out our post hoc tests. In this case it's the Holm method.
+
+```{r}
+with(gr2, pairwise.t.test(price,store, paired = T))
+```
+
+Here is the Bonferroni method: 
+
+```{r}
+with(gr2, pairwise.t.test(price,store, paired = T,p.adjust.method = "bonferroni"))
+```
+
+
