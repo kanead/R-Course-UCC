@@ -33,7 +33,7 @@ class(continuousVariables)
 ```
 
 # Histograms and distributions
-A histogram is a type of graph used to display a distribution. It helps us to overcome the natural tendency to rely on summary information, such as an average. Histograms can reveal information not captured by summary statistics. Histograms are generated in R using the function ***hist*
+A histogram is a type of graph used to display a distribution. It helps us to overcome the natural tendency to rely on summary information, such as an average. Histograms can reveal information not captured by summary statistics. Histograms are generated in R using the function **hist**
 
 ```{r}
 x<-rnorm(1000, mean = 175, sd = 3)
@@ -113,14 +113,7 @@ temp <- mapply(function(x,y,c) lines(c(x,x), c(0,y), lwd=2, col=c),
 ##Measures of Variability
 a measure that describes the range and diversity of scores in a distribution
 
-###standard deviation (SD) 
-the average deviation from the mean in a distribution
-
-\[SD = \sqrt\frac{\Sigma(X-M^2)}{N}\] is used for descriptive statistics
-
-\[SD = \sqrt\frac{\Sigma(X-M^2)}{n-1}\] is used for inferential statistics
-
-###variance ($SD^2$)
+###variance 
 
 sum of squared deviation scores = sum of squares are divided by the sample size = mean sum of squares
 
@@ -128,7 +121,12 @@ sum of squared deviation scores = sum of squares are divided by the sample size 
 
 \[SD^2 = \frac{\Sigma(X-M^2)}{n-1}\] is used for inferential statistics
 
-this is also known as the mean squares 
+###standard deviation 
+the average deviation from the mean in a distribution
+
+\[\sqrt\frac{\Sigma(X-M^2)}{N}\] is used for descriptive statistics
+
+\[\sqrt\frac{\Sigma(X-M^2)}{n-1}\] is used for inferential statistics
 
 ### Why n-1 and not N?
 The sample mean is not the population mean. The sample mean is "closer" to the sample data than the population mean, so the variance calculated is smaller. Using n-1 corrects for that because it will increase the value for variance. 
@@ -146,7 +144,7 @@ We can calculate some summary statistics for the goals he has scored for Manches
 here are the points he scored for the seasons he played:
 
 ```{r}
-goalsPerSeason<-c(29,36,35,27,30,32,28,34,27,29,33,28,14)
+goalsPerSeason<-c(11,16,14,12,12,26,11,27,12,17,12,8,1)
 ```
 
 we take the sum of those values and the sample size i.e. number of seasons he played to get the mean
@@ -172,14 +170,15 @@ goalsPerSeason - mean(goalsPerSeason)
 ```{r, echo=FALSE}
 rnorm2 <- function(n,mean,sd) { mean+sd*scale(rnorm(n)) }
 r <- goalsPerSeason
-x <- seq_along(r)  ## sets up a vector from 1 to length(r)
+x <- c(2004:2016)
+#x <- seq_along(r)  ## sets up a vector from 1 to length(r)
 par(las=1,bty="l") ## cosmetic preferences
 plot(x, r, col = "black", pch=16,xlab = "season", ylab = "goals scored") ## draws the points
 ## if you don't want points at all, use 
 ##    plot(x, r, type="n")  
 ## to set up the axes without drawing anything inside them
-segments(x0=x, y0=29.38462, x1=x, y1=r, col="black") ## connects them to the mean line
-abline(h=29.38462)
+segments(x0=x, y0=mean(goalsPerSeason), x1=x, y1=r, col="black") ## connects them to the mean line
+abline(h=mean(goalsPerSeason))
 
 ```
 
@@ -196,7 +195,7 @@ instead we square the deviation scores, sum them and divide by N to give us a sc
 
 That is to say we calculate mean squares because it is the sums of squares divided by N. 
 
-\[SD^2 = \frac{\Sigma(X-M^2)}{N}\] 
+\[variance = \frac{\Sigma(X-M^2)}{N}\] 
 
 ```{r}
 (goalsPerSeason - mean(goalsPerSeason))^2
@@ -223,8 +222,16 @@ var(goalsPerSeason)
 
 Notice that the values are slightly different here because we are dividing by n - 1 rather than just n. 
 
+# Exercise 1
+Using the following vectors of data draw a histogram of each variable, calculate their mean and their standard deviation.
+
+```{r}
+height <- c(163, 185, 155, 195, 168, 198, 200, 146, 179, 160, 180, 170)
+weight <- c(65, 85, 70, 120, 73, 100, 103, 50, 81, 64, 90, 78)
+```
+
 # Standardised Scales
-### Z-scores
+### z-scores
 In statistics there is a standard scale the Z scale. Any score from any normally distributed data can be converted to Z scores 
 
 \[Z = \frac{(X-M)}{SD}\]
@@ -250,10 +257,10 @@ Z=(X-M)/SD; Z
 ```
 This value of 2 means their score is 2 standard deviations above the mean
 
-### Z Distribution
-This is a standardised normal distribution.
+### z-Distribution
+Things to note about a normal distribution. 50% of the data fall above the mean and 50% below. The majority of the data fall between 2 standard deviations above and below the mean. If you are higher or lower than these values then you are an extreme point. This allows for predictions about the distribution because we know predictions aren't certain rather they are probabilistic. 
 
-If Z = 0 then the percentile rank = 50th which represents percentage of scores that fall at or below a score in a distribution. Thus 50% of the distribution falls below the mean 
+A z-distribution is a standardised normal distribution wiith a mean of 0 and a standard deviation of 1. If Z = 0 then the percentile rank = 50th which represents percentage of scores that fall at or below a score in a distribution. Thus 50% of the distribution falls below the mean 
 
 ```{r,echo=FALSE}
 plot(seq(-3.2,3.2,length=50),dnorm(seq(-3,3,length=50),0,1),type="l",xlab="",ylab="",ylim=c(0,0.5))
@@ -266,8 +273,6 @@ arrows(x0=c(-1.5,1.5),y0=c(0.3,0.3),x1=c(-2,2),y1=c(0.3,0.3))
 segments(x0 = c(-1,1),y0 = c(-1,-1),x1 = c(-1,1),y1=c(0.25,0.25))
 text(x=0,y=0.15,labels = expression("68% of the data within 1" * sigma),cex=0.9)
 ```
-Things to note about a normal distribution. 50% of the data fall above the mean and 50% below. The majority of the data fall between 2 standard deviations above and below the mean. If you are higher or lower than these values then you are an extreme point. This allows for predictions about the distribution because we know predictions aren't certain rather they are probabilistic. 
-
 We can use R functions **pnorm** and **qnorm** on our normal distribution so we can get a better handle on what it's saying. The function **pnorm** returns the area under the curve of our normal distribution from negative infinity to the Z score we specify. 
 
 The **pnorm** function also takes the argument **lower.tail**. If **lower.tail** is set equal to **FALSE** then **pnorm** returns the area under the curve from the Z score to positive infinity.
@@ -325,8 +330,8 @@ qt(0.5, df=5)
 ```
 
 
-#Exercise 
-The following distribution has a mean of 5 and a standard deviation of 2. Using **pnorm** find the area under the curve from negative infinity to 4. How many standard deviations is 4 away from the mean? 
+#Exercise 2
+The following distribution has a mean of 5 and a standard deviation of 1. Using **pnorm** find the area under the curve from negative infinity to 4. How many standard deviations is 4 away from the mean? 
 
 ```{r,echo=FALSE}
 x <- seq(2,8,length=500)
@@ -375,13 +380,13 @@ Usually you won't have multiple samples to use in making multiple estimates of t
 
 Standard error is an estimate of the average amount of sampling error e.g. for a sample mean
 
-\[SE = \frac{SD}{\sqrt{N}}\]
+\[SE = \frac{SD}{\sqrt{n}}\]
 
 SE = standard error
 
 SD = standard deviation of the sample 
 
-N = Size of the sample 
+n = Size of the sample 
 
 We can see from here that as the sample size in the denominator increases then the standard error is going to decrease. 
 
@@ -436,14 +441,10 @@ This does not mean the probability of the null hypothesis being true in p.
 In other words, \[P(D|H_0)!=P(H_0|D)\]
 
 ##Sampling Distributions
-The sampling distribution is a distribution of a sample statistic. While the concept of a distribution of a set of numbers is intuitive, the concept of a distribution of a set of statistics is not. 
-
-Rather than using NHST on distributions of individuals we use NHST on distributions of sample statistics.
-
-A sampling Distributions is a distribution of sample statistics, obtained from multiple samples, for example, a distribution of sample means, of sample correlations, or of sample regression coefficients. 
+The sampling distribution is a distribution of a sample statistic. While the concept of a distribution of a set of numbers is intuitive, the concept of a distribution of a set of statistics is not. Rather than using NHST on distributions of individuals we use NHST on distributions of sample statistics. A sampling distribution is a distribution of sample statistics, obtained from multiple samples, for example, a distribution of sample means, of sample correlations, or of sample regression coefficients. 
 
 ## Central Limit Theorem
-Here we have a normal population of data representing heights with a mean of 175 cm and a standard deviation of 5 cm and we repeatedly take 30 data points from this and calculate a mean of each one. Then we plot this to get a distribution of means. 
+Let's say we have a normal population of data representing heights with a mean of 175 cm and a standard deviation of 5 cm. We then repeatedly take 30 data points from this and calculate a mean of each one. Then we plot this to get a distribution of means. 
 
 ```{r}
 data.set <- rnorm(100000,175,5)
@@ -454,28 +455,15 @@ mean(out)
 SD.mean <- sd(data.set) / sqrt(30)
 ```
 
-The central limit states that this distribution of means will also be normally distributed. Even if the population is not normally distributed our sampling distribution will still be approximately normal according to the central limit theorem so long as our sample size is large enough ~ 30. The central limit theorem also states that the mean of a sampling distribution is the same as the mean of the population and the standard deviation of the sample means equals the standard error of the population mean.
+The central limit states that this distribution of means will be normally distributed if the distribution of the raw data is normally distributed (as it is here). But even if the population is not normally distributed our sampling distribution will still be approximately normal so long as our sample size is large enough > 30. The central limit theorem also states that the mean of a sampling distribution is the same as the mean of the population and the standard deviation of the sample means equals the standard error of the population mean.
 
 \[\sigma_{\bar{X}}=\frac{\sigma}{\sqrt{n}}\]
 
 http://mfviz.com/central-limit/
 
-This foundational theory in statistics is what allows us to make inferences about populations based on an individual sample. Given our understanding of the normal distribution, we can easily discuss the probability of a value occuring given a mean.
+This foundational theory in statistics is what allows us to make inferences about populations based on an individual sample. Given our understanding of the normal distribution, we can easily discuss the probability of a value occuring given a mean. **In statistics we use 'Null distributions' which are the sampling distributions of our statistics under the null hypothesis.** 
 
-For instance, say we have a sample of 50 batteries that last for a mean of 97 hours. Assuming that the standard deviation of the population is known to be 10 hours use a 0.05 significance level to test the claim that the population mean of all such batteries is 100 hours. So our null $H_0$ is that the batteries last for 100 hours and our alternative hypothesis $H_A$ is that they last for less than 100 hours. 
-
-```{r}
-x=seq(70,130,length=200)
-y=dnorm(x,mean=100,sd=10)
-plot(x,y,type="l")
-```
-```{r}
-x=seq(-3.5,3.5,length=200)
-y=dnorm(x,mean=0,sd=1)
-plot(x,y,type="l")
-```
-
-For convenience, the above distribution is transformed into the standard normal distribution by using the z-score of the sample mean. So the z score for our sample mean is our sample mean minus the mean under the null hypothesis divided by the standard error:
+For instance, say we have a sample of 50 batteries that last for a mean of 97 hours. Assuming that the standard deviation of the population is known to be 10 hours use a 0.05 significance level to test the claim that the population mean of all such batteries is 100 hours. So our null $H_0$ is that the batteries last for 100 hours and our alternative hypothesis $H_A$ is that they last for less than 100 hours. Then the z-score for our sample mean is our sample mean minus the mean under the null hypothesis (100 hours) divided by the standard error:
 
 ```{r}
 z <- (97 - 100) / (10/sqrt(50)) ; z
@@ -485,6 +473,7 @@ Then we can use pnorm to find the probability of getting a z-score of -2.12132.
 
 ```{r}
 pnorm(-2.12132)
+qnorm((1-0.95))
 ```
 
 ```{r,echo=FALSE}
@@ -493,18 +482,12 @@ cody <- c(0,dnorm(seq(-3,-2.12132,0.01)),0)
  curve(dnorm(x,0,1),xlim=c(-3,3),ylab = "y")
  polygon(codx,cody,col='red')
 ```
-
-
 In the above example, we knew the standard deviation of the population but this is generally not known. So instead, we use t-values and the t-distributions but the logic is the same.
-
-To reiterate, in statistics we use 'Null distributions' which are the sampling distributions of our **statistics** under the null hypothesis. 
 
 #t-tests
 Essentially what we've been doing here are z-tests and t-tests. These tests are commonly used to determine whether the mean of a population significantly differs from a specific value (called the hypothesized mean) or from the mean of another population.
 
-Let's assume a simple experimental design where we have an independent variable with either vaccine or placebo and a dependent variable which is the rate of polio.
-
-This will give us two means that can be compared using a t-test. NHST can be conducted, yielding a p-value. 
+Let's assume a simple experimental design where we have an independent variable with either vaccine or placebo and a dependent variable which is the rate of polio. This will give us two means that can be compared using a t-test. NHST can be conducted, yielding a p-value. 
 
 $z=(observed-expected)/SE$
 
@@ -580,14 +563,9 @@ t=(M1-M2)/SE
 SE=(SE1+SE2)/2
 
 #Extra step for indepenent t
-Homogeneity of variance is assumed. 
-The pooled SD is appropriate only if the variances in the two groups are equivalent.
+Homogeneity of variance is assumed for an indepdent t-test. The pooled SD is appropriate only if the variances in the two groups are equivalent. If not, then the homogeneity of variance assumption is violated. Simulations indicate this results in an increased probability of tpe 1 error.
 
-If not, then the homogeneity of variance assumption is violated. Simulations indicate this results in an increased probability of tpe 1 error.
-
-We can detect a violation of this assumption using Levene's test. If this is significant then the homogeneity of variance is violated.
-
-If it is violated we can adjust the df and p-value using Welch's procedure, which can protect against type 1 error, or we can use a non-parametric test.
+We can detect a violation of this assumption using Levene's test. If this is significant then the homogeneity of variance is violated. If it is violated we can adjust the df and p-value using Welch's procedure, which can protect against type 1 error, or we can use a non-parametric test.
 
 ```{r}
 # example with equal variance
@@ -612,26 +590,51 @@ leveneTest(y1,group)
 
 Conducting multiple t-tests is tedious and increases the probability of Type 1 error. Instead, when there are more than two group means to compare, conduct analysis of variance (ANOVA).
 
-#Exercise 
-We take a group of patients and want to test the effect of a drug on their test scores before and after their treatment. First, draw a boxplot **boxplot** and calculate the means of each of the samples, then conduct a t test to see if there is an effect. 
+#Exercise 3
+We take a group of 11 patients and want to test the effect of a drug on their test scores before and after their treatment. First, draw a boxplot **boxplot** and calculate the means of each of the samples, then conduct a t test to see if there is an effect. 
 
 ```{r}
 before<-c(30,68,45,60,79,40,55,49,82,44,76)
 after<-c(70,68,50,59,81,44,78,53,90,87,80)
 ```
 
-
 #Confidence Intervals 
 ##Confidence intervals around sample means 
+The logic of confidence intervals is to report a range of values, rather than a single value. The sample mean we calculate will not match up exactly with the population mean. This is because of sampling error. However, we do have an idea of how variable our sample means can be because we can estimate standard error. This is equivalent to the standard deviation of the sampling distribution of sample means.
 
-All sample statistics e.g. a sample mean, are point estimates i.e. one point from a sample distribution. More specifically, a sample mean represents a single point in a sampling distribution. Any one sample will never be perfect. The logic of confidence intervals is to report a range of values, rather than a single value. In other words, report an interval estimate rather than a point estimate. 
+Based on the Central Limit Theorem and rules the normal distribution, we know that approximately 95% of our sample means will be within 1.96 standard errors of the true population mean in our sampling distribution of the sample means i.e. within the shaded area (at 99% we would cover a wider area). The critical value $\alpha$ is 1 minus the confidence coefficient which we've set at 0.95. We take this $\alpha$ value and divide it evenly among both tails so that we have 2.5% of 0.025. 
 
-The main argument for interval estimates is the reality of sampling error. Sampling error implies that point estimates will vary from one study to the next (as we saw above we use standard error to get a measure of sampling error). A researcher will therefore be more confident about accuracy with an interval estimate. How frequently the observed interval contains the true parameter if the experiment is repeated is called the confidence level.
+But this sampling distribution is a useful fiction. In practice we have a sample mean and a measure of standard error. We use the point estimate of the sample mean we have along with the critical value and standard error estimate (the latter 2 of which are know as the margin of error). This allows us to create a confidence interval around the point estimate.
 
-The general form of a confidence interval is: point estimate $\pm$ margin of error, where the margin of error is Z * the standard error of the point estimate
+The general form of a confidence interval is: point estimate $\pm$ margin of error, where the margin of error is $Z_{\frac{\alpha}}{2}$ * the standard error of the point estimate. The 95% confidence interval for the population mean, can also be expressed as:
 
-### Calculating Confidence Intervals around sample means
-Remember in this case, this is the sampling distribution of the sample means, not the distribution of the raw data. So what we're saying is that 95% of all sample means are between the shaded area. The remaining area in the tails is called the $\alpha$ and here it is 5%. We take this $\alpha$ value and divide it evenly among both tails so that we have 2.5% of 0.025. Recall that for the standard normal distribution there is a 95% probability that a standard normal variable, Z, will fall between -1.96 and 1.96. 
+\[\bar{X}\pm 1.96 \frac{\sigma}{\sqrt{n}}\]
+
+The width of a confidence interval is influenced by sample size (as sample size increases you can be more confident that the interval will contain the estimate) and variance in the population (and sample). That is to say that standard error influences the width of the confidence intervals. 
+
+![.](C:/Users/akane/Desktop/Science/Teaching/R-Course-UCC/CI.jpg)
+
+However, because we're using a 95% confidence interval we may be unlucky when we calculate them such that they won't capture the population parameter. There are going to be times that we get a sample that is not representative of the population and therefore it will not contain the population mean. 95 % confidence is a confidence that in the long-run 95 % of the confidence intervals will include the population mean. It is a confidence in the algorithm and not a statement about a single confidence interval. **Thus it is not correct to say that your interval has a 95% chance of containing the population parameter.** It either does or it doesn't.
+
+###Why don't we use a confidence level of 100%?
+Wouldn't it be better to be right 100% of the time rather than 95% of the time? Not necessarily, when it comes to confidence intervals. The problem is that (for a given n and standard deviation), the smaller we make $\alpha$ the wider the CI becomes (think of the area in blue expanding outward). It is possible to construct a 100% confidence interval, but it is infinitely wide, and therefore tells us nothing.
+
+```{r, echo=FALSE}
+N <- 50
+n <- 5
+v <- matrix(c(0,0),nrow=2)
+for (i in 1:N) {
+  x <- rnorm(n)
+  v <- cbind(v, t.test(x)$conf.int)
+}
+v <- v[,2:(N+1)]
+plot(apply(v,2,mean), ylim=c(min(v),max(v)),
+     ylab='Confidence interval', xlab='')
+abline(0,0)
+c <- apply(v,2,min)>0 | apply(v,2,max)<0
+segments(1:N,v[1,],1:N,v[2,], col=c(par('fg'),'red')[c+1], lwd=3)
+title(main="The population mean need not be in the confidence interval")
+```
 
 ```{r,echo=FALSE}
 #plot(seq(-3.2,3.2,length=50),dnorm(seq(-3,3,length=50),0,1),type="l",xlab="",ylab="",ylim=c(0,0.5))
@@ -639,19 +642,6 @@ Remember in this case, this is the sampling distribution of the sample means, no
 #text(x=0,y=0.3,labels = expression("95% of the data within 1.96" ~ sigma))
 #arrows(x0=c(-1.5,1.5),y0=c(0.3,0.3),x1=c(-1.96,1.96),y1=c(0.3,0.3))
 ```
-
-The 95% confidence interval for the population mean, can also be expressed as:
-
-\[\bar{X}\pm 1.96 \frac{\sigma}{\sqrt{n}}\]
-
-What the equation tells us is that we have a mean $\pm$ 1.96 standard errors (standard deviations)
-
-Why are we using standard error of the mean here? Because it is the standard deviation of the sampling distribution. 
-
-The width of a confidence interval is influenced by sample size (as sample size increases you can be more confident that the interval will contain the estimate) and variance in the population (and sample). That is to say that standard error influences the width of the confidence intervals. 
-
-![.](C:/Users/akane/Desktop/Science/Teaching/R-Course-UCC/CI.jpg)
-
 
 ### Example of a confidence interval when the population standard deviation is known
 
@@ -661,9 +651,10 @@ Here we assume that the sample mean is 5, the standard deviation of the populati
 mean <- 5
 standardDeviation<- 2
 n <- 30
-error <- qnorm(0.975)*standardDeviation/sqrt(n) 
+error <- 1.96*standardDeviation/sqrt(n) 
 # when you find that the z-score for a given observation equals 1.96, you know that 
 # the probability of finding a value at or above that value is 0.025 and below is 1-0.025 = 0.975).
+# Can use qnorm(0.975) to find this
 left <- mean-error
 right <- mean+error
 left
@@ -674,7 +665,7 @@ This produces a mean of 5 with a 95% confidence interval ranging from 4.284322 t
 
 ### Example of a confidence interval when the population standard deviation is unknown
 
-Calculating the confidence interval when we don't know the population standard deviation is similar to using a z-distribution. The only difference is that we use the t-distribution rather than the z-distribution. Here we repeat the procedures above, but we will assume that we are working with a sample standard deviation rather than an exact standard deviation.
+Calculating the confidence interval when we don't know the population standard deviation is similar to using a z-distribution. The only differences are that we use the t-distribution rather than the z-distribution and we use sample standard deviation rather than population standard deviation. Here we repeat the procedures above, but we will assume that we are working with a sample standard deviation rather than an exact standard deviation.
 
 \[\bar{X}\pm 2.093024 \frac{\sigma}{\sqrt{n}}\]
 
@@ -699,31 +690,14 @@ right
 ```
 This produces a mean of 5 with a 95% confidence interval ranging from 4.253188 to 5.746812
 
-However, we may be unlucky when we calculate our confidence intervals such that they won't capture the population parameter.
-
-```{r, echo=FALSE}
-N <- 50
-n <- 5
-v <- matrix(c(0,0),nrow=2)
-for (i in 1:N) {
-  x <- rnorm(n)
-  v <- cbind(v, t.test(x)$conf.int)
-}
-v <- v[,2:(N+1)]
-plot(apply(v,2,mean), ylim=c(min(v),max(v)),
-     ylab='Confidence interval', xlab='')
-abline(0,0)
-c <- apply(v,2,min)>0 | apply(v,2,max)<0
-segments(1:N,v[1,],1:N,v[2,], col=c(par('fg'),'red')[c+1], lwd=3)
-title(main="The population mean need not be in the confidence interval")
-```
-
-95 % confidence is a confidence that in the long-run 95 % of the confidence intervals will include the population mean. It is a confidence in the algorithm and not a statement about a single confidence interval.
-
-Thus it is not correct to say that your interval has a 95% chance of containing the population parameter. It either does or it doesn't.
-
-
 http://rpsychologist.com/d3/CI/
+
+# Exercise 4
+To estimate the mean amount spent by customers in a restaurant, data was collected for 75 customers. We assume the population standard deviation is 4 euro. 
+
+1. At the 95% confidence, what is the margin of error? 
+
+2. If the sample mean is 20 euro, what is the 95% confidence interval for the population mean (all customers)?
 
 #Correlation
 A statistical procedure used to measure and describe the relationship between two variables 
@@ -754,15 +728,7 @@ y = jitter(-x, factor=10, amount = 10)
 plot(x,y,main="Negative relationship",pch=16)
 ```
 
-When two variables, let's call them X and Y, are correlated, then one variable can be used to predict the other variable.
-
-More precisely, a person's score on X can be used to predict his or her score on Y. 
-
-For example, working memory capacity is strongly correlated with intelligence, or IQ, in healthy young adults
-
-So if we know a person's IQ then we can predict how they will do on a a test of working memeory. 
-
-We can see in this scatterplot that there is a positive correlation in our data, which is verified by the value we get for our correlation.
+When two variables, let's call them X and Y, are correlated, then one variable can be used to predict the other variable. More precisely, a person's score on X can be used to predict his or her score on Y. For example, working memory capacity is strongly correlated with intelligence, or IQ, in healthy young adults. So if we know a person's IQ then we can predict how they will do on a a test of working memeory. We can see in this scatterplot that there is a positive correlation in our data, which is verified by the value we get for our correlation.
 
 ```{r}
 IQ <- rnorm(250, mean = 100, sd = 10)
@@ -906,8 +872,8 @@ plot4 <- ggplot(anscombe, aes(x=x4, y=y4)) + geom_point(size=circle.size, pch=21
 grid.arrange(plot1, plot2, plot3, plot4, top='Anscombe Quadrant -- Correlation Demostration')
 ```
 
-# Exercise 
-Using the following vectors of data draw a histogram of each variable, calculate their mean, standard deviation, plot them against one another and calculate their covariance and correlation.  
+# Exercise 5
+ Using the following vectors of data plot them against one another and calculate their covariance and correlation. What happens if you switch the order of the variables?
 
 ```{r}
 height <- c(163, 185, 155, 195, 168, 198, 200, 146, 179, 160, 180, 170)
@@ -915,11 +881,7 @@ weight <- c(65, 85, 70, 120, 73, 100, 103, 50, 81, 64, 90, 78)
 ```
 
 #Regression
-A regression is a statistical analysis used to predict scores on an outcome variable, based on scores on one or multiple predictor variables. It differs from correlation because the variables are no longer interchangeable. 
-
-Simple regression: one predictor variable 
-
-Multiple regression: multiple predictor variables
+A regression is a statistical analysis used to predict scores on an outcome variable, based on scores on one or multiple predictor variables. It differs from correlation because the variables are no longer interchangeable. In a simple regression there is one predictor variable whereas in a multiple regression there are multiple predictor variables.
 
 ##Regression equation
 \[Y = m + bX + e\]
@@ -1275,7 +1237,7 @@ This is often stated as the average change in the y variable for a change in a s
 
 According to this model, is the gender difference statistically significant? No because p > 0.05.
 
-#Exercise
+#Exercise 6
 Given these data, plot them, run a simple linear regression model, draw a line of best fit, write out the resulting regression equation and assess the model using diagnostic tests. 
 
 ```{r}
@@ -1419,7 +1381,7 @@ Observed <- matrix(c(40,10,10,90,40,10),nrow = 2,ncol = 3, byrow = T)
 chisq.test(Observed)
 ```
 
-#Exercise
+#Exercise 7
 ## Are Gender and Snack Preference Independent?
 240 men and 680 women are asked what snacks they prefer to eat at the cinema
 
