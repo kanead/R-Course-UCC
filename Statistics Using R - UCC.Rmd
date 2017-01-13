@@ -3,9 +3,9 @@ title: "Statistics Using R - UCC"
 author: "Adam Kane"
 date: "4 November 2016"
 output:
-  pdf_document: default
-  html_notebook: default
   html_document: default
+  html_notebook: default
+  pdf_document: default
 ---
 
 # Statistics Defined
