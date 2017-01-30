@@ -3,9 +3,9 @@ title: "Statistics Using R - UCC"
 author: "Adam Kane"
 date: "4 November 2016"
 output:
-  html_document: default
-  html_notebook: default
   pdf_document: default
+  html_notebook: default
+  html_document: default
 ---
 
 # Statistics Defined
@@ -1223,7 +1223,7 @@ summary(m1)
 
 We can construct the regression model using the coefficients from the R out put to produce the following:
 
-\[\hat{y} = 88632.5 - 150.4(pubs) + 959.4(PhD) - 8536.2(sex)\]
+\[\hat{y} = 88632.5 + 150.4(pubs) + 959.4(PhD) - 8536.2(sex)\]
 
 But, what do these values actually mean? 88632.5 is the intercept of the model and is the predicted salary for a male professor who has no publications and has just graduated from his PhD (predicted score when all X=0). 
 
